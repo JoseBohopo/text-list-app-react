@@ -1,5 +1,7 @@
 # Accessible List Manager
 
+## Deploy [Text List app](https://text-list-app.netlify.app/)
+
 A accessible list manager built with React, TypeScript, and Zustand. Allows users to manage a list of text items with full keyboard navigation, undo history, and accessible UI patterns.
 
 ## Features
