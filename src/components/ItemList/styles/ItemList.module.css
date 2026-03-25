@@ -1,0 +1,34 @@
+.list {
+  display: block;
+  width: 100%;
+  list-style: none;
+  margin: 0 0 1.9rem 0;
+  padding: 0;
+  background: var(--code-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-list);
+  min-height: var(--list-min-height);
+}
+
+.item {
+  cursor: pointer;
+  border-radius: var(--radius-list);
+  transition: background .17s, color .15s;
+  padding: 0.6em 1.2em;
+  color: var(--text);
+  background: transparent;
+  border: 1.5px solid var(--border);
+}
+
+.item.selected {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+  font-weight: 500;
+}
+
+.item:hover:not(.selected),
+.item:focus:not(.selected) {
+  background: var(--accent-bg);
+  outline: none;
+}

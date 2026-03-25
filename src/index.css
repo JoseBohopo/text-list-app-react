@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+  --accent: #595cff;
+  --accent-hover: #3637be;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --accent-border: rgba(170, 59, 255, 0.5);
+  --shadow: rgba(0,0,0,0.1) 0 10px 15px -3px, rgba(0,0,0,0.05) 0 4px 6px -2px;
+
+  --padding-container-v: 3rem;
+  --padding-container-h: 3.75rem;
+  --padding-modal-v: 2.1rem;
+  --padding-modal-h: 2.1rem;
+  --gap-container: 1.3rem;
+  --gap-actions: 1rem;
+  --gap-modal-actions: 1.12rem;
+  --radius-card: 1.38rem;
+  --radius-btn: 1.63rem;
+  --radius-list: 0.44rem;
+  --list-min-height: 10rem;
+  --modal-min-width: 33.75rem;
+  --card-min-width: 43.75rem;
+  --btn-min-width: 7.9rem;
+  --btn-padding: 0.93em 0;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  color: var(--text);
+  background: linear-gradient(135deg, #bcd1fa 0%, #d7e7fc 100%);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}

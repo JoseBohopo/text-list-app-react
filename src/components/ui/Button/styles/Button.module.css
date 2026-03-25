@@ -1,0 +1,45 @@
+.btn {
+  border-radius: var(--radius-btn);
+  min-width: var(--btn-min-width);
+  padding: var(--btn-padding);
+  font-size: 1.13em;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .17s, border .18s, color .17s;
+  border: 0;
+}
+
+.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.primary:hover,
+.primary:focus {
+  background: #7a23b6;
+}
+
+.secondary {
+  background: #fff;
+  color: var(--accent);
+  border: 1.5px solid var(--accent);
+}
+
+.secondary:hover:not(:disabled),
+.secondary:focus:not(:disabled) {
+  border-color: #7a23b6;
+  color: #7a23b6;
+}
+
+.secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.circle {
+  min-width: 3.5rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}

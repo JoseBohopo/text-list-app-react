@@ -1,0 +1,11 @@
+.actions {
+  display: flex;
+  gap: var(--gap-actions);
+  justify-content: space-between;
+  width: 94%;
+}
+
+.leftGroup {
+  display: flex;
+  align-items: center;
+}
