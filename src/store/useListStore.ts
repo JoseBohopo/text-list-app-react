@@ -9,6 +9,12 @@ const snapshot = (s: { items: ListStore['items']; focusedIndex: number }) => ({
   focusedIndex: s.focusedIndex,
 })
 
+const calcFocusIndex = (newItems: ListStore['items'], currentIndex: number) => {
+  if (newItems.length === 0) return -1
+  if (currentIndex >= newItems.length) return newItems.length - 1
+  return currentIndex
+}
+
 export const useListStore = create<ListStore>()(
   devtools(
     (set, get) => ({
@@ -52,22 +58,28 @@ export const useListStore = create<ListStore>()(
 
       removeSelected: () =>
         set(
-          (s) => ({
-            history: [...s.history, snapshot(s)],
-            items: s.items.filter((item) => !item.selected),
-            focusedIndex: 0,
-          }),
+          (s) => {
+            const newItems = s.items.filter((item) => !item.selected)
+            return {
+              history: [...s.history, snapshot(s)],
+              items: newItems,
+              focusedIndex: calcFocusIndex(newItems, s.focusedIndex),
+            }
+          },
           false,
           'removeSelected'
         ),
 
       removeItem: (id: number) =>
         set(
-          (s) => ({
-            history: [...s.history, snapshot(s)],
-            items: s.items.filter((item) => item.id !== id),
-            focusedIndex: 0,
-          }),
+          (s) => {
+            const newItems = s.items.filter((item) => item.id !== id)
+            return {
+              history: [...s.history, snapshot(s)],
+              items: newItems,
+              focusedIndex: calcFocusIndex(newItems, s.focusedIndex),
+            }
+          },
           false,
           'removeItem'
         ),
