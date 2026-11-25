@@ -1,16 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 :root {
-  /* Light mode */
+  /* Light */
   --text: #1f2937;
   --text-h: #111827;
   --text-muted: #6b7280;
   --bg: #ffffff;
   --bg-secondary: #f9fafb;
+  --bg-tertiary: #f3f4f6;
   --border: #e5e7eb;
   --accent: #3b82f6;
   --accent-hover: #2563eb;
   --accent-light: #eff6ff;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
 [data-theme="dark"] {
@@ -19,21 +23,38 @@
   --text-muted: #cbd5e1;
   --bg: #0f172a;
   --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
   --border: #334155;
   --accent: #60a5fa;
   --accent-hover: #3b82f6;
   --accent-light: #0c3d8c;
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--text);
-  background: var(--bg);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  background: linear-gradient(135deg, #bcd1fa 0%, #d7e7fc 100%);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
 }
 
 @keyframes fadeIn {
@@ -50,19 +71,4 @@ body {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-}
-
-.app {
-  animation: fadeIn 0.4s ease-out;
 }
