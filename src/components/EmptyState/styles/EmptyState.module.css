@@ -1,0 +1,28 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+  min-height: 15rem;
+}
+
+.icon {
+  width: 3rem;
+  height: 3rem;
+  opacity: 0.4;
+}
+
+.container h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.container p {
+  margin: 0;
+  font-size: 0.9rem;
+}
