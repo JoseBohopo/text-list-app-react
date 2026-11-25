@@ -1,15 +1,22 @@
+
 .overlay {
   position: fixed;
   inset: 0;
-  height: 100vh;
-  width: 100vw;
-  background: rgba(42, 51, 88, 0.28);
+  width: 100%;
+  height: 100%;
   z-index: 100;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  padding: 1.25rem;
   border: none;
-  padding: 0;
+
+  background: rgba(20, 24, 45, 0.48);
+
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
 }
 
 .overlay::backdrop {
@@ -17,78 +24,228 @@
 }
 
 .overlayEnter {
-  animation: overlayMoveDown 0.6s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+  animation: overlayFade 0.25s ease forwards;
 }
 
 .modal {
-  background: var(--bg);
-  border-radius: var(--radius-card);
-  box-shadow: 0 8px 32px rgba(25, 33, 62, 0.18);
-  padding: var(--padding-modal-v) var(--padding-modal-h);
-  min-width: var(--modal-min-width);
+  width: 100%;
+  max-width: 440px;
+  min-width: 0;
+  box-sizing: border-box;
+
+  padding: 2.2rem;
+
   display: flex;
   flex-direction: column;
-  gap: 1.12rem;
-  align-items: flex-start;
+  align-items: stretch;
+
+  /* Más separación entre bloques */
+  gap: 1.6rem;
+
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+
+  box-shadow:
+    0 24px 70px rgba(20, 24, 45, 0.18),
+    0 4px 12px rgba(20, 24, 45, 0.06);
+
+  animation: modalEnter 0.3s
+    cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ICON */
+
+.modalIcon {
+  width: 52px;
+  height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #7157D9;
+  background: rgba(113, 87, 217, 0.11);
+
+  border-radius: 14px;
+}
+
+/* HEADER */
+
+.modalHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 
 .modal h2 {
-  font-size: 1.4em;
-  font-weight: 600;
-  color: var(--text-h);
   margin: 0;
+
+  font-size: 1.65rem;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+
+  color: var(--text-h);
+}
+
+.modalHeader p {
+  margin: 0;
+
+  font-size: 0.92rem;
+  line-height: 1.7;
+
+  color: var(--text);
+  opacity: 0.75;
+}
+
+/* INPUT */
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+
+  /* Más espacio entre label, input y helper */
+  gap: 0.9rem;
 }
 
 .modal label {
-  font-size: 1.27em;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--text-h);
-  margin-bottom: 0.44rem;
 }
 
 .modal input {
-  padding: 0.87rem;
   width: 100%;
-  font-size: 1.1rem;
-  border: 1.5px solid var(--border);
-  border-radius: 0.25rem;
   box-sizing: border-box;
-  outline: none;
-  transition: border 0.19s;
+
+  padding: 1rem;
+
+  margin-top: 0.1rem;
+
+  font-family: inherit;
+  font-size: 0.95rem;
+
   color: var(--text);
   background: var(--bg);
+
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.modal input::placeholder {
+  color: #A0A3B3;
+}
+
+.modal input:hover {
+  border-color: var(--accent);
 }
 
 .modal input:focus {
   border-color: var(--accent);
+
+  box-shadow:
+    0 0 0 4px rgba(113, 87, 217, 0.12);
 }
+
+.modal input[aria-invalid="true"] {
+  border-color: #E05252;
+
+  box-shadow:
+    0 0 0 3px rgba(224, 82, 82, 0.1);
+}
+
+/* HELPER TEXT */
+
+.helperText {
+  margin-top: 0.15rem;
+
+  font-size: 0.8rem;
+  line-height: 1.5;
+
+  color: var(--text);
+  opacity: 0.6;
+}
+
+/* ERROR */
+
+.modal .error {
+  margin: 0;
+
+  color: #DC4545;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+/* ACTIONS */
 
 .modalActions {
   display: flex;
-  gap: var(--gap-modal-actions);
   justify-content: flex-end;
+  align-items: center;
+
+  gap: 0.75rem;
   width: 100%;
+
+  margin-top: 0.25rem;
 }
 
-.modal .error {
-  color: red;
-  font-size: 0.9rem;
-  margin: 0;
-}
+/* ANIMATIONS */
 
-@media (max-width: 850px) {
-  .modal {
-    min-width: 95vw;
-    padding: 10vw 5vw;
-  }
-}
-
-@keyframes overlayMoveDown {
-  0% {
+@keyframes overlayFade {
+  from {
     opacity: 0;
-    transform: translateY(-100vh);
   }
-  100% {
+
+  to {
     opacity: 1;
-    transform: translateY(0);
+  }
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 480px) {
+  .modal {
+    padding: 1.5rem;
+    gap: 1.4rem;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+  }
+
+  .modalActions > * {
+    width: 100%;
+  }
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  .overlayEnter,
+  .modal {
+    animation: none;
+  }
+
+  .modal input {
+    transition: none;
   }
 }

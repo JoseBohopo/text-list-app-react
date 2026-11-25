@@ -1,11 +1,106 @@
+
 .actions {
   display: flex;
-  gap: var(--gap-actions);
+  align-items: center;
   justify-content: space-between;
-  width: 94%;
+
+  gap: 1rem;
+
+  width: 100%;
+  box-sizing: border-box;
+
+  margin-bottom: 1.25rem;
 }
+
+/* LEFT ACTIONS */
 
 .leftGroup {
   display: flex;
   align-items: center;
+  gap: 0.65rem;
+}
+
+/* BUTTON ICON ALIGNMENT */
+
+.leftGroup button,
+.actions > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+/* HOVER */
+
+.leftGroup button:not(:disabled):hover,
+.actions > button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+/* ACTIVE */
+
+.leftGroup button:not(:disabled):active,
+.actions > button:not(:disabled):active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* DELETE BUTTON */
+
+.leftGroup button[name="delete"] {
+  color: #D65353;
+}
+
+.leftGroup button[name="delete"]:hover:not(:disabled) {
+  background: rgba(214, 83, 83, 0.08);
+  border-color: rgba(214, 83, 83, 0.35);
+}
+
+/* DISABLED */
+
+.leftGroup button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+  transform: none;
+}
+
+/* KEYBOARD ACCESSIBILITY */
+
+.actions button:focus-visible {
+  outline: 3px solid rgba(113, 87, 217, 0.3);
+  outline-offset: 3px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 480px) {
+  .actions {
+    gap: 0.65rem;
+  }
+
+  .leftGroup {
+    gap: 0.45rem;
+  }
+
+  .leftGroup button,
+  .actions > button {
+    font-size: 0.85rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leftGroup button,
+  .actions > button {
+    transition: none;
+  }
+
+  .leftGroup button:not(:disabled):hover,
+  .actions > button:not(:disabled):hover {
+    transform: none;
+  }
 }
