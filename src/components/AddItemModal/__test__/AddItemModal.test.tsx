@@ -35,7 +35,7 @@ describe('AddItemModal', () => {
 
   it('adds item and closes on valid submission', async () => {
     const { onClose } = setup();
-    await userEvent.type(screen.getByPlaceholderText('New item...'), 'Buy milk');
+    await userEvent.type(screen.getByPlaceholderText('What would you like to add?'), 'Buy milk');
     await userEvent.click(screen.getByRole('button', { name: /add/i }));
     expect(useListStore.getState().items[0].text).toBe('Buy milk');
     expect(onClose).toHaveBeenCalledOnce();
@@ -52,7 +52,7 @@ describe('AddItemModal', () => {
     setup();
     await userEvent.click(screen.getByRole('button', { name: /add/i }));
     expect(screen.getByRole('alert')).toBeInTheDocument();
-    await userEvent.type(screen.getByPlaceholderText('New item...'), 'x');
+    await userEvent.type(screen.getByPlaceholderText('What would you like to add?'), 'x');
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
