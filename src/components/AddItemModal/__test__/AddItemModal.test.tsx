@@ -33,12 +33,26 @@ describe('AddItemModal', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
-  it('adds item and closes on valid submission', async () => {
+  it('adds item with default priority and category', async () => {
     const { onClose } = setup();
     await userEvent.type(screen.getByPlaceholderText('What would you like to add?'), 'Buy milk');
     await userEvent.click(screen.getByRole('button', { name: /add/i }));
-    expect(useListStore.getState().items[0].text).toBe('Buy milk');
+    const item = useListStore.getState().items[0];
+    expect(item.text).toBe('Buy milk');
+    expect(item.priority).toBe('medium');
+    expect(item.category).toBe('personal');
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('adds item with custom priority and category', async () => {
+    setup();
+    await userEvent.type(screen.getByPlaceholderText('What would you like to add?'), 'Work task');
+    await userEvent.selectOptions(screen.getByLabelText('Priority'), 'high');
+    await userEvent.selectOptions(screen.getByLabelText('Category'), 'work');
+    await userEvent.click(screen.getByRole('button', { name: /add/i }));
+    const item = useListStore.getState().items[0];
+    expect(item.priority).toBe('high');
+    expect(item.category).toBe('work');
   });
 
   it('closes without adding on cancel', async () => {

@@ -15,10 +15,24 @@
   padding: 1.25rem 1.5rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
   animation: slideUp 0.3s ease-out;
+}
+
+/* Priority colors */
+.priority-high {
+  border-left-color: #ef4444;
+}
+
+.priority-medium {
+  border-left-color: #f59e0b;
+}
+
+.priority-low {
+  border-left-color: #10b981;
 }
 
 .item:hover:not(:disabled) {
@@ -40,20 +54,16 @@
 
 .item.selected .itemIndicator {
   background: var(--accent);
+  border-color: var(--accent);
 }
 
-.itemText {
-  flex: 1;
-  font-size: 1.05rem;
-  font-weight: 500;
-  color: var(--text);
-  word-break: break-word;
-}
-
-.item.selected .itemText {
-  color: var(--text-h);
-  text-decoration: line-through;
+.item.completed {
   opacity: 0.6;
+}
+
+.item.completed .itemText {
+  text-decoration: line-through;
+  color: var(--text-muted);
 }
 
 .itemIndicator {
@@ -65,8 +75,90 @@
   transition: all 0.2s ease;
 }
 
-.item.selected .itemIndicator {
-  border-color: var(--accent);
+.itemContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.itemText {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.itemMeta {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cat-work {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+[data-theme="dark"] .cat-work {
+  background: #0c3d8c;
+  color: #93c5fd;
+}
+
+.cat-personal {
+  background: #fce7f3;
+  color: #be185d;
+}
+
+[data-theme="dark"] .cat-personal {
+  background: #831843;
+  color: #fbcfe8;
+}
+
+.cat-shopping {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+[data-theme="dark"] .cat-shopping {
+  background: #064e3b;
+  color: #86efac;
+}
+
+.cat-health {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+[data-theme="dark"] .cat-health {
+  background: #78350f;
+  color: #fcd34d;
+}
+
+.cat-other {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+[data-theme="dark"] .cat-other {
+  background: #334155;
+  color: #cbd5e1;
+}
+
+.dueDate {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {

@@ -1,8 +1,9 @@
-
 import { useRef, useEffect } from "react";
 
 import { useListStore } from "../../store/useListStore";
 import { useKeyboardNavigation } from "../../hooks/useKeyboardNavigation";
+import { useWorkflowOrdering } from "../../hooks/useworkflowOrdering";
+
 import { EmptyState } from "../EmptyState/EmptyState";
 
 import styles from "./styles/ItemList.module.css";
@@ -15,19 +16,19 @@ export function ItemList() {
     removeItem,
   } = useListStore();
 
+  const orderedItems = useWorkflowOrdering(items);
   const listRef = useRef<HTMLUListElement>(null);
 
   useKeyboardNavigation(listRef);
 
   useEffect(() => {
     const listItems = listRef.current?.querySelectorAll("li");
-
     if (listItems?.[focusedIndex]) {
       (listItems[focusedIndex] as HTMLElement).focus();
     }
   }, [focusedIndex]);
 
-    if (items.length === 0) {
+  if (items.length === 0) {
     return <EmptyState />;
   }
 
@@ -39,7 +40,7 @@ export function ItemList() {
       role="listbox"
       aria-label="List of elements"
     >
-      {items.map((item, index) => (
+      {orderedItems.map((item, index) => (
         <li
           key={item.id}
           role="option"
@@ -49,18 +50,27 @@ export function ItemList() {
           className={`
             ${styles.item}
             ${item.selected ? styles.selected : ""}
+            ${styles[`priority-${item.priority}`]}
+            ${item.completed ? styles.completed : ""}
           `}
           onClick={() => toggleItem(item.id)}
           onDoubleClick={() => removeItem(item.id)}
         >
-          <span className={styles.itemText}>
-            {item.text}
-          </span>
+          <span className={styles.itemIndicator} aria-hidden="true" />
 
-          <span
-            className={styles.itemIndicator}
-            aria-hidden="true"
-          />
+          <div className={styles.itemContent}>
+            <span className={styles.itemText}>{item.text}</span>
+            <div className={styles.itemMeta}>
+              <span className={`${styles.badge} ${styles[`cat-${item.category}`]}`}>
+                {item.category}
+              </span>
+              {item.dueDate && (
+                <span className={styles.dueDate}>
+                  {new Date(item.dueDate).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+          </div>
         </li>
       ))}
     </ul>

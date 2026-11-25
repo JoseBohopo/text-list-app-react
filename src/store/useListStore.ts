@@ -35,11 +35,22 @@ export const useListStore = create<ListStore>()(
             'saveToHistory'
           ),
 
-        addItem: (text) =>
+        addItem: (text, priority = 'medium', category = 'personal') =>
           set(
             (s) => ({
               history: [...s.history, snapshot(s)],
-              items: [...s.items, { id: nextId++, text, selected: false }],
+              items: [
+                ...s.items,
+                {
+                  id: nextId++,
+                  text,
+                  selected: false,
+                  priority,
+                  category,
+                  completed: false,
+                  createdAt: new Date(),
+                },
+              ],
             }),
             false,
             'addItem'
@@ -55,6 +66,32 @@ export const useListStore = create<ListStore>()(
             }),
             false,
             'toggleItem'
+          ),
+
+        completedItem: (id) =>
+          set(
+            (s) => ({
+              history: [...s.history, snapshot(s)],
+              items: s.items.map((item) =>
+                item.id === id
+                  ? { ...item, completed: true, completedAt: new Date() }
+                  : item
+              ),
+            }),
+            false,
+            'completeItem'
+          ),
+
+        updateItem: (id, updates) =>
+          set(
+            (s) => ({
+              history: [...s.history, snapshot(s)],
+              items: s.items.map((item) =>
+                item.id === id ? { ...item, ...updates } : item
+              ),
+            }),
+            false,
+            'updateItem'
           ),
 
         removeSelected: () =>
