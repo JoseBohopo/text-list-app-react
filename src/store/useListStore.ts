@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
-import type { ListStore, Item, Priority, Category } from './types/useListStore.types'
+import type { ListStore } from './types/useListStore.types'
 
 let nextId = 1
 

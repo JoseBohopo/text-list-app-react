@@ -34,7 +34,7 @@ describe("Toolbar", () => {
 
   it("Delete removes selected item", async () => {
     useListStore.setState({
-      items: [{ id: 1, text: "a", selected: true }],
+      items: [{ id: 1, text: "a", selected: true, priority: "medium", category: "personal", completed: false, createdAt: new Date() }],
       focusedIndex: 0,
       history: [{ items: [], focusedIndex: 0 }],
     });
@@ -45,7 +45,7 @@ describe("Toolbar", () => {
 
   it("Undo restores previous state", async () => {
     useListStore.setState({
-      items: [{ id: 1, text: "a", selected: false }],
+      items: [{ id: 1, text: "a", selected: false, priority: "medium", category: "personal", completed: false, createdAt: new Date() }],
       focusedIndex: 0,
       history: [{ items: [], focusedIndex: 0 }],
     });
