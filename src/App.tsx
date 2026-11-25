@@ -6,10 +6,9 @@ export default function App() {
   return (
     <main className={styles.app}>
       <section className={styles.container} aria-labelledby="main-title">
-        <h1 id="main-title">This is a technical proof</h1>
+        <h1 id="main-title">Stay Organized</h1>
         <p id="main-desc">
-          Lorem ipsum dolor sit amet consectetur adipiscing, elit mus primis nec
-          inceptos. Lacinia habitasse arcu molestie maecenas cursus quam nunc.
+          Capture your ideas and tasks in one place. Simple, fast, and distraction-free.
         </p>
         <ItemList />
         <Toolbar />

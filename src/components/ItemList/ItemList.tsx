@@ -3,6 +3,7 @@ import { useRef, useEffect } from "react";
 
 import { useListStore } from "../../store/useListStore";
 import { useKeyboardNavigation } from "../../hooks/useKeyboardNavigation";
+import { EmptyState } from "../EmptyState/EmptyState";
 
 import styles from "./styles/ItemList.module.css";
 
@@ -25,6 +26,10 @@ export function ItemList() {
       (listItems[focusedIndex] as HTMLElement).focus();
     }
   }, [focusedIndex]);
+
+    if (items.length === 0) {
+    return <EmptyState />;
+  }
 
   return (
     <ul
