@@ -1,10 +1,10 @@
-
 import { useRef, useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 
 import { useListStore } from "../../store/useListStore";
 import { validateInput } from "../../utils/validation";
 import { Button } from "../ui/Button/Button";
+import type { Priority, Category } from "../../store/types/useListStore.types";
 
 import styles from "./styles/AddItemModal.module.css";
 
@@ -14,22 +14,24 @@ interface Props {
   readonly triggerRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-export function AddItemModal({
-  isOpen,
-  onClose,
-  triggerRef,
-}: Props) {
+export function AddItemModal({ isOpen, onClose, triggerRef }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDialogElement>(null);
 
   const { addItem } = useListStore();
   const [error, setError] = useState<string | null>(null);
+  const [priority, setPriority] = useState<Priority>("medium");
+  const [category, setCategory] = useState<Category>("personal");
+  const [dueDate, setDueDate] = useState<string>("");
 
   const handleCancel = useCallback(() => {
     setError(null);
+    setPriority("medium");
+    setCategory("personal");
+    setDueDate("");
     onClose();
     triggerRef.current?.focus();
-  }, [onClose, triggerRef])
+  }, [onClose, triggerRef]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -65,21 +67,28 @@ export function AddItemModal({
     }
 
     setError(null);
-    addItem(value);
+    addItem(value, priority, category);
+
+    if (dueDate) {
+      const { items } = useListStore.getState();
+      const lastItem = items.at(-1);
+      if (!lastItem) return;
+      useListStore
+        .getState()
+        .updateItem(lastItem.id, { dueDate: new Date(dueDate) });
+    }
 
     if (inputRef.current) {
       inputRef.current.value = "";
     }
 
+    setPriority("medium");
+    setCategory("personal");
     onClose();
     triggerRef.current?.focus();
   }
 
-
-
-  function handleOverlayClick(
-    e: React.MouseEvent<HTMLDialogElement>
-  ) {
+  function handleOverlayClick(e: React.MouseEvent<HTMLDialogElement>) {
     if (e.target === modalRef.current) {
       handleCancel();
     }
@@ -124,62 +133,82 @@ export function AddItemModal({
 
         <div className={styles.modalHeader}>
           <h2 id="modalTitle">Add a new item</h2>
-
           <p id="modalDescription">
-            Add something new to your list and
-            keep everything organized.
+            Add something new to your list and keep everything organized.
           </p>
         </div>
 
         <div className={styles.inputGroup}>
-          <label htmlFor="modalInput">
-            Item name
-          </label>
-
+          <label htmlFor="modalInput">Item name</label>
           <input
             id="modalInput"
             ref={inputRef}
             type="text"
             placeholder="What would you like to add?"
             aria-invalid={!!error}
-            aria-describedby={
-              error ? "inputError" : "inputHelper"
-            }
+            aria-describedby={error ? "inputError" : "inputHelper"}
             onChange={() => setError(null)}
             required
             autoComplete="off"
           />
 
           {error ? (
-            <p
-              id="inputError"
-              role="alert"
-              className={styles.error}
-            >
+            <p id="inputError" role="alert" className={styles.error}>
               {error}
             </p>
           ) : (
-            <span
-              id="inputHelper"
-              className={styles.helperText}
-            >
+            <span id="inputHelper" className={styles.helperText}>
               Keep it short and descriptive.
             </span>
           )}
         </div>
 
+        <div className={styles.selectGroup}>
+          <div className={styles.select}>
+            <label htmlFor="priority">Priority</label>
+            <select
+              id="priority"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value as Priority)}
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <div className={styles.select}>
+            <label htmlFor="category">Category</label>
+            <select
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value as Category)}
+            >
+              <option value="personal">Personal</option>
+              <option value="work">Work</option>
+              <option value="shopping">Shopping</option>
+              <option value="health">Health</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div className={styles.select}>
+            <label htmlFor="dueDate">Due date (optional)</label>
+            <input
+              id="dueDate"
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
+          </div>
+        </div>
+
         <div className={styles.modalActions}>
-          <Button
-            variant="secondary"
-            type="button"
-            onClick={handleCancel}
-          >
+          <Button variant="secondary" type="button" onClick={handleCancel}>
             Cancel
           </Button>
 
-          <Button type="submit">
-            Add item
-          </Button>
+          <Button type="submit">Add item</Button>
         </div>
       </form>
     </dialog>,
