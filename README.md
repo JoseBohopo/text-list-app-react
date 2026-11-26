@@ -68,14 +68,14 @@ src/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js ^20.19.0 or >=22.12.0
 - npm 9+
 
 ### Installation
 
 ```bash
-git clone https://github.com/your-username/your-repo.git
-cd your-repo
+git clone https://github.com/JoseBohopo/text-list-app-react.git
+cd text-list-app-react
 npm install
 ```
 
@@ -94,6 +94,10 @@ npm test           # watch mode
 npm run test:run   # single run (CI)
 npm run test:ui    # visual UI
 ```
+
+### Formatting
+
+The `format` script formats project files using Prettier.
 
 ### Build
 
