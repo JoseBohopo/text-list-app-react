@@ -95,6 +95,15 @@ describe("Toolbar", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent("1 hidden by filters");
     expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
 
+    const cancelButton = screen.getByRole("button", { name: "Cancel" });
+    const confirmButton = screen.getByRole("button", { name: "Delete tasks" });
+
+    await user.tab({ shift: true });
+    expect(confirmButton).toHaveFocus();
+
+    await user.tab();
+    expect(cancelButton).toHaveFocus();
+
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(useListStore.getState().items).toHaveLength(2);
     expect(deleteButton).toHaveFocus();
