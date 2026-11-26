@@ -13,7 +13,7 @@ export function useKeyboardNavigation(
 
     function handleKeyDown(event: KeyboardEvent) {
       const options = Array.from(
-        list!.querySelectorAll<HTMLElement>('[role="option"]')
+        list!.querySelectorAll<HTMLElement>("[data-task-control]")
       );
       const index = options.findIndex(
         (option) => option === document.activeElement
