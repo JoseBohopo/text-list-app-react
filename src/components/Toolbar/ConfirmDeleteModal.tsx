@@ -18,6 +18,7 @@ export function ConfirmDeleteModal({
 }: Props) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -48,10 +49,32 @@ export function ConfirmDeleteModal({
         {hiddenCount} hidden by filters.
       </p>
       <div className={styles.actions}>
-        <Button ref={cancelRef} type="button" onClick={onCancel}>
+        <Button
+          ref={cancelRef}
+          type="button"
+          onClick={onCancel}
+          onKeyDown={(event) => {
+            if (event.key === "Tab" && event.shiftKey) {
+              event.preventDefault();
+              confirmRef.current?.focus();
+            }
+          }}
+        >
           Cancel
         </Button>
-        <Button type="button" className={styles.danger} onClick={onConfirm}>
+
+        <Button
+          ref={confirmRef}
+          type="button"
+          className={styles.danger}
+          onClick={onConfirm}
+          onKeyDown={(event) => {
+            if (event.key === "Tab" && !event.shiftKey) {
+              event.preventDefault();
+              cancelRef.current?.focus();
+            }
+          }}
+        >
           Delete tasks
         </Button>
       </div>
