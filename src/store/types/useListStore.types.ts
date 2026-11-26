@@ -45,7 +45,10 @@ export interface ListStore {
   removeSelected: () => void;
   removeItem: (id: number) => void;
   setFocusIndex: (index: number) => void;
-  updateItem: (id: number, updates: Partial<Item>) => void;
+  updateItem: (
+    id: number,
+    updates: Partial<Pick<Item, "text" | "priority" | "category" | "dueDate">>
+  ) => void;
   completedItem: (id: number) => void;
   setFilters: (filters: Partial<FilterState>) => void;
   undo: () => boolean;

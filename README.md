@@ -17,17 +17,19 @@ A accessible list manager built with React, TypeScript, and Zustand. Allows user
 ## Features
 
 - **Add items** via a modal dialog — empty entries are rejected with inline validation
-- **Select items** by clicking — multiple selections supported
+- **Select items** using their checkboxes — multiple selections supported
 - **Delete selected items** via the Delete button
 - **Double-click to delete** a single item directly without selecting it first
 - **Undo** any action (add, select, deselect, delete) with full history support
 - **Keyboard navigation** — Arrow keys, Home, End, Enter, Space, all supported
-- **Accessible** — ARIA roles, roving tabindex, focus management, live regions
+- **Accessible** — ARIA roles, Keyboard navigation with Tab and arrow keys, focus management, live regions
 - **Portal-based modal** — rendered at the document body level to avoid stacking context issues
 - **Complete tasks** by clicking them; completed tasks remain visible by default
 - **Organize tasks** by priority, category, and due date
 - **Search and filter** by text, category, priority, and completion status
 - **Persist tasks and filters** in browser local storage
+- **Edit items** — change their text, priority, category, or due date
+- **Task status** — pending, completed, or overdue based on the local date
 
 ## Tech Stack
 
@@ -133,18 +135,18 @@ Every action that mutates the list (`addItem`, `toggleItem`, `removeSelected`, `
 
 ## Keyboard Shortcuts
 
-| Key               | Action                                                        |
-| ----------------- | ------------------------------------------------------------- |
-| `Arrow Down`      | Move focus to next item                                       |
-| `Arrow Up`        | Move focus to previous item                                   |
-| `Home`            | Move focus to first item                                      |
-| `End`             | Move focus to last item                                       |
-| `Enter` / `Space` | Select and complete, or deselect and reopen, the focused item |
+| Key                       | Action                                  |
+| ------------------------- | --------------------------------------- |
+| `Arrow Down` / `Arrow Up` | Move between task buttons               |
+| `Home` / `End`            | Move to the first or last task button   |
+| `Enter` / `Space`         | Complete or reopen the focused task     |
+| `Space`                   | Select or deselect the focused checkbox |
+| `Tab`                     | Move between controls                   |
 
 ## Accessibility
 
-- List uses `role="listbox"` with `role="option"` on each item
-- Roving `tabindex` pattern for list navigation
+- Tasks use a semantic list with separate buttons for task actions and editing
+- Keyboard navigation with Tab and arrow keys
 - Modal uses `role="dialog"` with `aria-modal="true"`
 - Input uses `aria-invalid` when validation fails
 - Error messages use `role="alert"` for screen reader announcements

@@ -4,25 +4,36 @@ import { createPortal } from "react-dom";
 import { useListStore } from "../../store/useListStore";
 import { validateInput } from "../../utils/validation";
 import { Button } from "../ui/Button/Button";
-import type { Priority, Category } from "../../store/types/useListStore.types";
+import type {
+  Item,
+  Priority,
+  Category,
+} from "../../store/types/useListStore.types";
 
 import styles from "./styles/AddItemModal.module.css";
 
 interface Props {
+  readonly item?: Item;
   readonly isOpen: boolean;
   readonly onClose: () => void;
   readonly triggerRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-export function AddItemModal({ isOpen, onClose, triggerRef }: Props) {
+export function AddItemModal({ item, isOpen, onClose, triggerRef }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDialogElement>(null);
 
-  const { addItem } = useListStore();
+  const { addItem, updateItem } = useListStore();
   const [error, setError] = useState<string | null>(null);
-  const [priority, setPriority] = useState<Priority>("medium");
-  const [category, setCategory] = useState<Category>("personal");
-  const [dueDate, setDueDate] = useState<string>("");
+  const [priority, setPriority] = useState<Priority>(
+    item?.priority ?? "medium"
+  );
+  const [category, setCategory] = useState<Category>(
+    item?.category ?? "personal"
+  );
+  const [dueDate, setDueDate] = useState<string>(
+    item?.dueDate?.slice(0, 10) ?? ""
+  );
 
   const handleCancel = useCallback(() => {
     setError(null);
@@ -61,7 +72,16 @@ export function AddItemModal({ isOpen, onClose, triggerRef }: Props) {
     }
 
     setError(null);
-    addItem(value, priority, category, dueDate || undefined);
+    if (item) {
+      updateItem(item.id, {
+        text: value,
+        priority,
+        category,
+        dueDate: dueDate || undefined,
+      });
+    } else {
+      addItem(value, priority, category, dueDate || undefined);
+    }
 
     if (inputRef.current) {
       inputRef.current.value = "";
@@ -141,9 +161,11 @@ export function AddItemModal({ isOpen, onClose, triggerRef }: Props) {
         </div>
 
         <div className={styles.modalHeader}>
-          <h2 id="modalTitle">Add a new item</h2>
+          <h2 id="modalTitle">{item ? "Edit item" : "Add a new item"}</h2>
           <p id="modalDescription">
-            Add something new to your list and keep everything organized.
+            {item
+              ? "Edit your item and keep everything organized."
+              : "Add something new to your list and keep everything organized."}
           </p>
         </div>
 
@@ -156,6 +178,7 @@ export function AddItemModal({ isOpen, onClose, triggerRef }: Props) {
             placeholder="What would you like to add?"
             aria-invalid={!!error}
             aria-describedby={error ? "inputError" : "inputHelper"}
+            defaultValue={item?.text ?? ""}
             onChange={() => setError(null)}
             required
             autoComplete="off"
@@ -217,7 +240,7 @@ export function AddItemModal({ isOpen, onClose, triggerRef }: Props) {
             Cancel
           </Button>
 
-          <Button type="submit">Add item</Button>
+          <Button type="submit">{item ? "Save changes" : "Add item"}</Button>
         </div>
       </form>
     </dialog>,

@@ -34,6 +34,31 @@ describe("toggleItem", () => {
   });
 });
 
+describe("updateItem", () => {
+  it("updates a task and restores it with undo", () => {
+    useListStore.getState().addItem("Original", "low", "work", "2026-12-01");
+    const original = useListStore.getState().items[0];
+
+    useListStore.getState().updateItem(original.id, {
+      text: "Updated",
+      priority: "high",
+      category: "personal",
+      dueDate: undefined,
+    });
+
+    expect(useListStore.getState().items[0]).toEqual({
+      ...original,
+      text: "Updated",
+      priority: "high",
+      category: "personal",
+      dueDate: undefined,
+    });
+
+    expect(useListStore.getState().undo()).toBe(true);
+    expect(useListStore.getState().items[0]).toEqual(original);
+  });
+});
+
 describe("removeSelected", () => {
   it("removes selected items and resets focusedIndex", () => {
     useListStore.getState().addItem("a");

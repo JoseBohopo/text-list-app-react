@@ -81,6 +81,45 @@ describe("AddItemModal", () => {
     expect(useListStore.getState().items).toHaveLength(0);
   });
 
+  it("edits an existing item and supports undo", async () => {
+    const user = userEvent.setup();
+    useListStore.getState().addItem("Original", "low", "work", "2026-12-01");
+
+    const original = useListStore.getState().items[0];
+
+    render(
+      <AddItemModal
+        isOpen
+        item={original}
+        onClose={vi.fn()}
+        triggerRef={createRef<HTMLButtonElement>()}
+      />
+    );
+
+    const name = screen.getByLabelText("Item name");
+    expect(name).toHaveValue("Original");
+    expect(screen.getByLabelText("Priority")).toHaveValue("low");
+    expect(screen.getByLabelText(/due date/i)).toHaveValue("2026-12-01");
+
+    await user.clear(name);
+    await user.type(name, "Updated");
+    await user.selectOptions(screen.getByLabelText("Priority"), "high");
+    await user.clear(screen.getByLabelText(/due date/i));
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(useListStore.getState().items).toHaveLength(1);
+    expect(useListStore.getState().items[0]).toMatchObject({
+      id: original.id,
+      text: "Updated",
+      priority: "high",
+      category: "work",
+      dueDate: undefined,
+    });
+
+    expect(useListStore.getState().undo()).toBe(true);
+    expect(useListStore.getState().items[0]).toEqual(original);
+  });
+
   it("keeps Tab navigation inside the dialog", async () => {
     const user = userEvent.setup();
     setup();
