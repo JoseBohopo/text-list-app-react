@@ -115,6 +115,10 @@ The `format` script formats project files using Prettier.
 npm run build
 ```
 
+### Continuous integration
+
+GitHub Actions runs linting, tests and a production build on every push and pull request.
+
 ## State Management
 
 All application state lives in a single Zustand store:

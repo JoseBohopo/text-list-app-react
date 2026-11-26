@@ -1,9 +1,10 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AddItemModal } from "../AddItemModal";
 import { useListStore } from "../../../store/useListStore";
 import { createRef } from "react";
+import { Toolbar } from "../../Toolbar/Toolbar";
 
 beforeEach(() =>
   useListStore.setState({ items: [], focusedIndex: 0, history: [] })
@@ -78,6 +79,36 @@ describe("AddItemModal", () => {
       useListStore.getState().undo();
     });
     expect(useListStore.getState().items).toHaveLength(0);
+  });
+
+  it("keeps Tab navigation inside the dialog", async () => {
+    const user = userEvent.setup();
+    setup();
+
+    const first = screen.getByLabelText("Item name");
+    const last = screen.getByRole("button", { name: "Add item" });
+
+    expect(first).toHaveFocus();
+
+    await user.tab({ shift: true });
+    expect(last).toHaveFocus();
+
+    await user.tab();
+    expect(first).toHaveFocus();
+  });
+
+  it("closes the add dialog and returns focus on cancel", async () => {
+    const user = userEvent.setup();
+    render(<Toolbar />);
+
+    const trigger = screen.getByRole("button", { name: /add item/i });
+    await user.click(trigger);
+
+    const dialog = screen.getByRole("dialog");
+    fireEvent(dialog, new Event("cancel", { cancelable: true }));
+
+    expect(dialog).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 
   it("closes without adding on cancel", async () => {
