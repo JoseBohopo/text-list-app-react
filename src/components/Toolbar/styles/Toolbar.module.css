@@ -1,64 +1,29 @@
 .actions {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  width: fit-content;
+  max-width: 100%;
+  margin-left: auto;
+  padding: 0.5rem;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 12px;
-  position: fixed;
-  z-index: 20;
-  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-  left: 50%;
-  transform: translateX(-50%);
-  width: max-content;
-  max-width: calc(100% - 2rem);
-  box-shadow: var(--shadow-lg);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.actions:hover,
+.actions:focus-within {
+  background: var(--bg-secondary);
+  border-color: var(--border);
 }
 
 .leftGroup {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-}
-
-.filterPanel {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(100% + 1rem);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  width: min(18rem, calc(100vw - 2rem));
-  padding: 1rem;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: var(--shadow-lg);
-  max-height: calc(100vh - 9rem);
-  max-height: calc(100dvh - 9rem);
-  overflow-y: auto;
-}
-
-.filterButton {
-  position: relative;
-}
-
-.filterCount {
-  position: absolute;
-  top: 0;
-  right: 0;
-  min-width: 1.1rem;
-  padding: 0.1rem;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  background: var(--bg-secondary);
-  color: var(--text);
-  font-size: 0.7rem;
-  line-height: 1;
-  text-align: center;
 }
 
 @media (max-width: 768px) {

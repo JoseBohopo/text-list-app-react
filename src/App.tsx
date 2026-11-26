@@ -56,9 +56,11 @@ export default function App() {
             Add item
           </Button>
         </header>
-        <SearchFilter />
+        <div className={styles.stickyControls}>
+          <SearchFilter />
+          <Toolbar />
+        </div>
         <ItemList onAddItem={openAdd} />
-        <Toolbar />
         <div id="status" className="sr-only" aria-live="polite" />
       </section>
     </main>

@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SearchFilter } from "../SearchFilter";
 import { useListStore } from "../../../store/useListStore";
 
-import { Toolbar } from "../../Toolbar/Toolbar";
+import App from "../../../App";
 
 beforeEach(() => useListStore.getState().reset());
 
@@ -26,7 +26,8 @@ describe("SearchFilter", () => {
 
   it("opens and closes the filters with the keyboard", async () => {
     const user = userEvent.setup();
-    render(<Toolbar />);
+    useListStore.getState().addItem("task");
+    render(<SearchFilter />);
 
     const button = screen.getByRole("button", { name: "Filters" });
     button.focus();
@@ -48,7 +49,8 @@ describe("SearchFilter", () => {
 
   it("shows active filters after closing the panel", async () => {
     const user = userEvent.setup();
-    render(<Toolbar />);
+    useListStore.getState().addItem("task");
+    render(<SearchFilter />);
 
     const button = screen.getByRole("button", { name: "Filters" });
     expect(button).toHaveAccessibleDescription("0 active filters");
@@ -71,10 +73,50 @@ describe("SearchFilter", () => {
     expect(screen.getByLabelText("Filter by category")).toHaveValue("work");
     expect(screen.getByLabelText("Filter by priority")).toHaveValue("high");
   });
+
+  it("disables filters when there are no tasks and enables them after adding one", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "Filters" }));
+
+    const category = screen.getByLabelText("Filter by category");
+    const priority = screen.getByLabelText("Filter by priority");
+    const completed = screen.getByRole("switch", {
+      name: "Show completed tasks",
+    });
+
+    expect(category).toBeDisabled();
+    expect(priority).toBeDisabled();
+    expect(completed).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Add item" }));
+    await user.type(screen.getByLabelText("Item name"), "First task");
+    await user.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Add item",
+      })
+    );
+
+    expect(category).toBeEnabled();
+    expect(priority).toBeEnabled();
+    expect(completed).toBeEnabled();
+
+    await user.click(
+      screen.getByRole("checkbox", { name: "Select First task for deletion" })
+    );
+    await user.click(screen.getByRole("button", { name: /delete selected/i }));
+
+    expect(category).toBeDisabled();
+    expect(priority).toBeDisabled();
+    expect(completed).toBeDisabled();
+  });
   it("toggles completed checkbox", async () => {
     const user = userEvent.setup();
+    useListStore.getState().addItem("task");
     render(<SearchFilter />);
 
+    await user.click(screen.getByRole("button", { name: "Filters" }));
     const checkbox = screen.getByRole("switch", {
       name: /show completed tasks/i,
     });

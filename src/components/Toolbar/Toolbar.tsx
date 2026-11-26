@@ -7,7 +7,6 @@ import { useFilterItems } from "../../hooks/useFilterItems";
 import { Button } from "../ui/Button/Button";
 
 import styles from "./styles/Toolbar.module.css";
-import { FilterControls } from "../SearchFilter/SearchFilter";
 
 export function Toolbar() {
   const {
@@ -22,8 +21,6 @@ export function Toolbar() {
 
   const { theme, toggle } = useTheme();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   const deleteBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -41,9 +38,6 @@ export function Toolbar() {
   }, [isDeleteModalOpen]);
 
   const visibleItems = useFilterItems(items, filters);
-  const activeFilterCount =
-    Number(Boolean(filters.categoryFilter)) +
-    Number(Boolean(filters.priorityFilter));
   const hiddenSelectedCount =
     items.filter((item) => item.selected).length -
     visibleItems.filter((item) => item.selected).length;
@@ -227,59 +221,6 @@ export function Toolbar() {
             </svg>
             Delete
           </Button>
-          <div
-            className={styles.filters}
-            onKeyDown={(event) => {
-              if (event.key !== "Escape" || !isFiltersOpen) return;
-              event.preventDefault();
-              setIsFiltersOpen(false);
-              filterButtonRef.current?.focus();
-            }}
-          >
-            <Button
-              ref={filterButtonRef}
-              className={styles.filterButton}
-              type="button"
-              variant="secondary"
-              circle
-              aria-label="Filters"
-              aria-expanded={isFiltersOpen}
-              aria-describedby="active-filter-count"
-              onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="19"
-                height="19"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M4 7h16M7 12h10M10 17h4" />
-              </svg>
-              {activeFilterCount > 0 && (
-                <span className={styles.filterCount} aria-hidden="true">
-                  {activeFilterCount}
-                </span>
-              )}
-            </Button>
-            <span id="active-filter-count" className="sr-only">
-              {activeFilterCount} active filters
-            </span>
-
-            {isFiltersOpen && (
-              <div
-                className={styles.filterPanel}
-                role="group"
-                aria-label="Filters"
-              >
-                <FilterControls />
-              </div>
-            )}
-          </div>
         </div>
       </article>
       {isDeleteModalOpen && (

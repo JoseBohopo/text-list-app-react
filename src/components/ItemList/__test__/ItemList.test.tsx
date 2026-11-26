@@ -348,6 +348,7 @@ describe("ItemList", () => {
     );
 
     await user.click(screen.getByText("first"));
+    await user.click(screen.getByRole("button", { name: "Filters" }));
     const checkbox = screen.getByRole("switch", {
       name: /show completed tasks/i,
     });
