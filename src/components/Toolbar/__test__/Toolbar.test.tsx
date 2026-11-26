@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { Toolbar } from "../Toolbar";
 import { useListStore } from "../../../store/useListStore";
+import App from "../../../App";
 
 beforeEach(() => useListStore.getState().reset());
 
@@ -13,7 +14,6 @@ afterEach(() => {
 describe("Toolbar", () => {
   it("renders Add, Delete and Undo buttons", () => {
     render(<Toolbar />);
-    expect(screen.getByRole("button", { name: /add/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /undo/i })).toBeInTheDocument();
   });
@@ -29,8 +29,8 @@ describe("Toolbar", () => {
   });
 
   it("opens the modal on Add click", async () => {
-    render(<Toolbar />);
-    await userEvent.click(screen.getByRole("button", { name: /add/i }));
+    render(<App />);
+    await userEvent.click(screen.getByRole("button", { name: "Add item" }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
@@ -86,7 +86,7 @@ describe("Toolbar", () => {
     useListStore.getState().toggleItem(hidden.id);
     useListStore.getState().setFilters({ search: "visible" });
 
-    render(<Toolbar />);
+    render(<App />);
     const deleteButton = screen.getByRole("button", {
       name: /delete selected/i,
     });

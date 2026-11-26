@@ -13,6 +13,10 @@ import { EmptyState } from "../EmptyState/EmptyState";
 
 import styles from "./styles/ItemList.module.css";
 
+interface Props {
+  readonly onAddItem: (trigger: HTMLButtonElement) => void;
+}
+
 function getToday(): string {
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -26,7 +30,7 @@ function getTaskStatus(item: Item, today: string) {
   return "Pending";
 }
 
-export function ItemList() {
+export function ItemList({ onAddItem }: Props) {
   const {
     items,
     filters,
@@ -37,35 +41,41 @@ export function ItemList() {
     removeItem,
   } = useListStore();
 
-  const filteredItems = useFilterItems(items, filters);
-  const orderedItems = useWorkflowOrdering(filteredItems);
-  const activeIndex = Math.min(
-    Math.max(focusedIndex, 0),
-    orderedItems.length - 1
-  );
-
+  const [visibleCount, setVisibleCount] = useState(20);
+  const [pinnedId, setPinnedId] = useState<number | null>(null);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [today, setToday] = useState(getToday);
+
+  const filteredItems = useFilterItems(items, filters);
+  const orderedItems = useWorkflowOrdering(filteredItems);
+  const visibleItems = orderedItems.filter(
+    (item, index) => index < visibleCount || item.id === pinnedId
+  );
+  const activeIndex = Math.min(
+    Math.max(focusedIndex, 0),
+    visibleItems.length - 1
+  );
+
   const editTriggerRef = useRef<HTMLButtonElement>(null);
   const noResultsRef = useRef<HTMLOutputElement>(null);
   const restoreEditFocus = useRef(false);
   const listRef = useRef<HTMLUListElement>(null);
   const pendingFocusId = useRef<number | null>(null);
 
-  useKeyboardNavigation(listRef, orderedItems.length);
+  useKeyboardNavigation(listRef, visibleItems.length);
 
   useLayoutEffect(() => {
     const id = pendingFocusId.current;
     if (id === null) return;
     pendingFocusId.current = null;
 
-    const index = orderedItems.findIndex((item) => item.id === id);
+    const index = visibleItems.findIndex((item) => item.id === id);
 
     if (index < 0) {
-      if (orderedItems.length === 0) {
+      if (visibleItems.length === 0) {
         noResultsRef.current?.focus();
       } else {
-        const nextItem = orderedItems[activeIndex];
+        const nextItem = visibleItems[activeIndex];
         listRef.current
           ?.querySelector<HTMLButtonElement>(`[data-id="${nextItem.id}"]`)
           ?.focus();
@@ -76,7 +86,7 @@ export function ItemList() {
 
     listRef.current?.querySelector<HTMLElement>(`[data-id="${id}"]`)?.focus();
     setFocusIndex(index);
-  }, [orderedItems, setFocusIndex, activeIndex]);
+  }, [visibleItems, setFocusIndex, activeIndex]);
 
   useLayoutEffect(() => {
     if (editingItem !== null || !restoreEditFocus.current) return;
@@ -126,7 +136,7 @@ export function ItemList() {
   }, []);
 
   if (items.length === 0) {
-    return <EmptyState />;
+    return <EmptyState onAddItem={onAddItem} />;
   }
 
   if (orderedItems.length === 0) {
@@ -145,7 +155,7 @@ export function ItemList() {
         className={styles.list}
         aria-label="List of elements"
       >
-        {orderedItems.map((item, index) => {
+        {visibleItems.map((item, index) => {
           const status = getTaskStatus(item, today);
 
           return (
@@ -173,9 +183,15 @@ export function ItemList() {
                 aria-pressed={item.completed}
                 aria-label={`Complete ${item.text}`}
                 aria-describedby={`task-status-${item.id} task-category-${item.id}${item.dueDate ? ` task-date-${item.id}` : ""}`}
-                onFocus={() => setFocusIndex(index)}
+                onFocus={() => {
+                  setFocusIndex(index);
+                  if (pinnedId !== null && pinnedId !== item.id) {
+                    setPinnedId(null);
+                  }
+                }}
                 onClick={() => {
                   pendingFocusId.current = item.id;
+                  setPinnedId(item.id);
                   completedItem(item.id);
                 }}
                 onDoubleClick={() => removeItem(item.id)}
@@ -224,6 +240,28 @@ export function ItemList() {
           );
         })}
       </ul>
+      {visibleCount < orderedItems.length && (
+        <Button
+          type="button"
+          onClick={() => {
+            const nextItem = orderedItems
+              .slice(visibleCount, visibleCount + 20)
+              .find(
+                (item) =>
+                  !visibleItems.some((visible) => visible.id === item.id)
+              );
+
+            const focusTarget = nextItem ?? orderedItems[visibleCount];
+            if (focusTarget) {
+              pendingFocusId.current = focusTarget.id;
+            }
+
+            setVisibleCount((count) => count + 20);
+          }}
+        >
+          Load more tasks
+        </Button>
+      )}
       {editingItem && (
         <AddItemModal
           isOpen

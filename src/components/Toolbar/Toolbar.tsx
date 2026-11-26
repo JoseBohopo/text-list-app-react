@@ -4,10 +4,10 @@ import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 import { useListStore } from "../../store/useListStore";
 import { useTheme } from "../../hooks/useTheme";
 import { useFilterItems } from "../../hooks/useFilterItems";
-import { AddItemModal } from "../AddItemModal/AddItemModal";
 import { Button } from "../ui/Button/Button";
 
 import styles from "./styles/Toolbar.module.css";
+import { FilterControls } from "../SearchFilter/SearchFilter";
 
 export function Toolbar() {
   const {
@@ -21,10 +21,10 @@ export function Toolbar() {
   } = useListStore();
 
   const { theme, toggle } = useTheme();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
 
-  const addBtnRef = useRef<HTMLButtonElement>(null);
   const deleteBtnRef = useRef<HTMLButtonElement>(null);
 
   const restoreDeleteFocus = useRef(false);
@@ -36,11 +36,14 @@ export function Toolbar() {
     if (deleteBtnRef.current && !deleteBtnRef.current.disabled) {
       deleteBtnRef.current.focus();
     } else {
-      addBtnRef.current?.focus();
+      document.getElementById("addBtn")?.focus();
     }
   }, [isDeleteModalOpen]);
 
   const visibleItems = useFilterItems(items, filters);
+  const activeFilterCount =
+    Number(Boolean(filters.categoryFilter)) +
+    Number(Boolean(filters.priorityFilter));
   const hiddenSelectedCount =
     items.filter((item) => item.selected).length -
     visibleItems.filter((item) => item.selected).length;
@@ -224,31 +227,60 @@ export function Toolbar() {
             </svg>
             Delete
           </Button>
-        </div>
-
-        <Button
-          ref={addBtnRef}
-          id="addBtn"
-          onClick={() => setIsModalOpen(true)}
-          aria-haspopup="dialog"
-          type="button"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+          <div
+            className={styles.filters}
+            onKeyDown={(event) => {
+              if (event.key !== "Escape" || !isFiltersOpen) return;
+              event.preventDefault();
+              setIsFiltersOpen(false);
+              filterButtonRef.current?.focus();
+            }}
           >
-            <path d="M12 5v14" />
-            <path d="M5 12h14" />
-          </svg>
-          Add item
-        </Button>
+            <Button
+              ref={filterButtonRef}
+              className={styles.filterButton}
+              type="button"
+              variant="secondary"
+              circle
+              aria-label="Filters"
+              aria-expanded={isFiltersOpen}
+              aria-describedby="active-filter-count"
+              onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="19"
+                height="19"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 7h16M7 12h10M10 17h4" />
+              </svg>
+              {activeFilterCount > 0 && (
+                <span className={styles.filterCount} aria-hidden="true">
+                  {activeFilterCount}
+                </span>
+              )}
+            </Button>
+            <span id="active-filter-count" className="sr-only">
+              {activeFilterCount} active filters
+            </span>
+
+            {isFiltersOpen && (
+              <div
+                className={styles.filterPanel}
+                role="group"
+                aria-label="Filters"
+              >
+                <FilterControls />
+              </div>
+            )}
+          </div>
+        </div>
       </article>
       {isDeleteModalOpen && (
         <ConfirmDeleteModal
@@ -258,11 +290,6 @@ export function Toolbar() {
           onConfirm={confirmDelete}
         />
       )}
-      <AddItemModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        triggerRef={addBtnRef}
-      />
     </>
   );
 }
