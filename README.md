@@ -4,6 +4,16 @@
 
 A accessible list manager built with React, TypeScript, and Zustand. Allows users to manage a list of text items with full keyboard navigation, undo history, and accessible UI patterns.
 
+![Task list with priorities, categories and filters](<./public/Screenshot 2026-11-26 140222.png>)
+
+### Empty state
+
+![Empty task list in light mode](<./public/Screenshot 2026-11-26 135841.png>)
+
+### Add task
+
+![Add task dialog in dark mode](<./public/Screenshot 2026-11-26 135858.png>)
+
 ## Features
 
 - **Add items** via a modal dialog — empty entries are rejected with inline validation
