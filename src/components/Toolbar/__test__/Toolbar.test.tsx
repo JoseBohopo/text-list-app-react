@@ -10,18 +10,6 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-if (typeof HTMLDialogElement.prototype.showModal !== "function") {
-  HTMLDialogElement.prototype.showModal = function () {
-    this.open = true;
-  };
-}
-
-if (typeof HTMLDialogElement.prototype.close !== "function") {
-  HTMLDialogElement.prototype.close = function () {
-    this.open = false;
-  };
-}
-
 describe("Toolbar", () => {
   it("renders Add, Delete and Undo buttons", () => {
     render(<Toolbar />);

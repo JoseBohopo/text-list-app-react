@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 
 import { useListStore } from "../../store/useListStore";
@@ -29,30 +29,24 @@ export function AddItemModal({ isOpen, onClose, triggerRef }: Props) {
     setPriority("medium");
     setCategory("personal");
     setDueDate("");
+    modalRef.current?.close();
     onClose();
     triggerRef.current?.focus();
   }, [onClose, triggerRef]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isOpen) return;
 
-    const timeoutId = setTimeout(() => {
-      inputRef.current?.focus();
-    }, 50);
+    const dialog = modalRef.current;
+    if (!dialog) return;
 
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        handleCancel();
-      }
-    }
-
-    document.addEventListener("keydown", handleEscape);
+    dialog.showModal();
+    inputRef.current?.focus();
 
     return () => {
-      clearTimeout(timeoutId);
-      document.removeEventListener("keydown", handleEscape);
+      if (dialog.open) dialog.close();
     };
-  }, [isOpen, handleCancel]);
+  }, [isOpen]);
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -76,8 +70,27 @@ export function AddItemModal({ isOpen, onClose, triggerRef }: Props) {
     setPriority("medium");
     setCategory("personal");
     setDueDate("");
+    modalRef.current?.close();
     onClose();
     triggerRef.current?.focus();
+  }
+
+  function handleDialogKeyDown(event: React.KeyboardEvent<HTMLDialogElement>) {
+    if (event.key !== "Tab") return;
+
+    const controls = event.currentTarget.querySelectorAll<HTMLElement>(
+      "input:not(:disabled), select:not(:disabled), button:not(:disabled)"
+    );
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
   }
 
   function handleOverlayClick(e: React.MouseEvent<HTMLDialogElement>) {
@@ -96,7 +109,11 @@ export function AddItemModal({ isOpen, onClose, triggerRef }: Props) {
       aria-labelledby="modalTitle"
       aria-describedby="modalDescription"
       onClick={handleOverlayClick}
-      open
+      onKeyDown={handleDialogKeyDown}
+      onCancel={(event) => {
+        event.preventDefault();
+        handleCancel();
+      }}
     >
       <form
         className={styles.modal}
