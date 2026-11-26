@@ -38,9 +38,9 @@ describe("useWorkflowOrdering", () => {
   });
 
   it("sorts by dueDate (soonest first)", () => {
-    const today = new Date();
-    const tomorrow = new Date(today.getTime() + 86400000);
-    const nextWeek = new Date(today.getTime() + 604800000);
+    const today = "2026-03-15";
+    const tomorrow = "2026-03-16";
+    const nextWeek = "2026-03-22";
 
     const items = [
       createItem({ dueDate: nextWeek }),
@@ -53,13 +53,10 @@ describe("useWorkflowOrdering", () => {
   });
 
   it("prioritizes items with dueDate over without", () => {
-    const dueDate = new Date();
-    const items = [
-      createItem(),
-      createItem({ dueDate }),
-    ];
+    const dueDate = "2026-03-15";
+    const items = [createItem(), createItem({ dueDate })];
     const sorted = useWorkflowOrdering(items);
-    expect(sorted[0].dueDate).toEqual(dueDate);
+    expect(sorted[0].dueDate).toEqual("2026-03-15");
   });
 
   it("sorts by createdAt when other criteria equal", () => {

@@ -1,8 +1,9 @@
-
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 
 import { useListStore } from "../../store/useListStore";
 import { useTheme } from "../../hooks/useTheme";
+import { useFilterItems } from "../../hooks/useFilterItems";
 import { AddItemModal } from "../AddItemModal/AddItemModal";
 import { Button } from "../ui/Button/Button";
 
@@ -10,6 +11,8 @@ import styles from "./styles/Toolbar.module.css";
 
 export function Toolbar() {
   const {
+    items,
+    filters,
     getSelectedItem,
     removeSelected,
     undo,
@@ -19,45 +22,148 @@ export function Toolbar() {
 
   const { theme, toggle } = useTheme();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
   const addBtnRef = useRef<HTMLButtonElement>(null);
+  const deleteBtnRef = useRef<HTMLButtonElement>(null);
+
+  const restoreDeleteFocus = useRef(false);
+
+  useEffect(() => {
+    if (isDeleteModalOpen || !restoreDeleteFocus.current) return;
+
+    restoreDeleteFocus.current = false;
+    if (deleteBtnRef.current && !deleteBtnRef.current.disabled) {
+      deleteBtnRef.current.focus();
+    } else {
+      addBtnRef.current?.focus();
+    }
+  }, [isDeleteModalOpen]);
+
+  const visibleItems = useFilterItems(items, filters);
+  const hiddenSelectedCount =
+    items.filter((item) => item.selected).length -
+    visibleItems.filter((item) => item.selected).length;
 
   function handleDelete() {
     if (!getSelectedItem()) return;
+
+    if (hiddenSelectedCount > 0) {
+      setIsDeleteModalOpen(true);
+      return;
+    }
+
     saveToHistory();
     removeSelected();
   }
 
+  function closeDeleteModal() {
+    restoreDeleteFocus.current = true;
+    setIsDeleteModalOpen(false);
+  }
+
+  function confirmDelete() {
+    saveToHistory();
+    removeSelected();
+    closeDeleteModal();
+  }
+
   return (
     <>
-      <article
-        className={styles.actions}
-        aria-label="List actions"
-      >
+      <article className={styles.actions} aria-label="List actions">
         <div className={styles.leftGroup}>
-           <Button
+          <Button
             name="theme"
             variant="secondary"
             circle
             onClick={toggle}
-            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            title={`${theme === 'light' ? 'Dark' : 'Light'} mode`}
+            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
+            title={`${theme === "light" ? "Dark" : "Light"} mode`}
             type="button"
           >
-            {theme === 'light' ? (
-              <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true">
+            {theme === "light" ? (
+              <svg
+                viewBox="0 0 24 24"
+                width="19"
+                height="19"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
               </svg>
             ) : (
-              <svg viewBox="0 0 24 24" width="19" height="19" fill="currentColor" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                width="19"
+                height="19"
+                fill="currentColor"
+                aria-hidden="true"
+              >
                 <circle cx="12" cy="12" r="5" />
-                <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" strokeWidth="2" />
-                <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" strokeWidth="2" />
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" strokeWidth="2" />
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" strokeWidth="2" />
-                <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="2" />
-                <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" strokeWidth="2" />
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" strokeWidth="2" />
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" strokeWidth="2" />
+                <line
+                  x1="12"
+                  y1="1"
+                  x2="12"
+                  y2="3"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <line
+                  x1="12"
+                  y1="21"
+                  x2="12"
+                  y2="23"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <line
+                  x1="4.22"
+                  y1="4.22"
+                  x2="5.64"
+                  y2="5.64"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <line
+                  x1="18.36"
+                  y1="18.36"
+                  x2="19.78"
+                  y2="19.78"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <line
+                  x1="1"
+                  y1="12"
+                  x2="3"
+                  y2="12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <line
+                  x1="21"
+                  y1="12"
+                  x2="23"
+                  y2="12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <line
+                  x1="4.22"
+                  y1="19.78"
+                  x2="5.64"
+                  y2="18.36"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <line
+                  x1="18.36"
+                  y1="5.64"
+                  x2="19.78"
+                  y2="4.22"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
               </svg>
             )}
           </Button>
@@ -92,6 +198,7 @@ export function Toolbar() {
             name="delete"
             variant="secondary"
             id="deleteBtn"
+            ref={deleteBtnRef}
             onClick={handleDelete}
             disabled={!getSelectedItem()}
             aria-label="Delete selected item"
@@ -115,7 +222,6 @@ export function Toolbar() {
               <path d="M10 11v5" />
               <path d="M14 11v5" />
             </svg>
-
             Delete
           </Button>
         </div>
@@ -141,11 +247,17 @@ export function Toolbar() {
             <path d="M12 5v14" />
             <path d="M5 12h14" />
           </svg>
-
           Add item
         </Button>
       </article>
-
+      {isDeleteModalOpen && (
+        <ConfirmDeleteModal
+          selectedCount={items.filter((item) => item.selected).length}
+          hiddenCount={hiddenSelectedCount}
+          onCancel={closeDeleteModal}
+          onConfirm={confirmDelete}
+        />
+      )}
       <AddItemModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

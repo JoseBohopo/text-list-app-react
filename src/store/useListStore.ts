@@ -1,19 +1,19 @@
-import { create } from 'zustand'
-import { devtools, persist } from 'zustand/middleware'
-import type { ListStore } from './types/useListStore.types'
+import { create } from "zustand";
+import { devtools, persist } from "zustand/middleware";
+import type { ListStore } from "./types/useListStore.types";
 
-let nextId = 1
+let nextId = 1;
 
-const snapshot = (s: { items: ListStore['items']; focusedIndex: number }) => ({
-  items: s.items.map(item => ({ ...item })),
+const snapshot = (s: { items: ListStore["items"]; focusedIndex: number }) => ({
+  items: s.items.map((item) => ({ ...item })),
   focusedIndex: s.focusedIndex,
-})
+});
 
-const calcFocusIndex = (newItems: ListStore['items'], currentIndex: number) => {
-  if (newItems.length === 0) return -1
-  if (currentIndex >= newItems.length) return newItems.length - 1
-  return currentIndex
-}
+const calcFocusIndex = (newItems: ListStore["items"], currentIndex: number) => {
+  if (newItems.length === 0) return -1;
+  if (currentIndex >= newItems.length) return newItems.length - 1;
+  return currentIndex;
+};
 
 export const useListStore = create<ListStore>()(
   devtools(
@@ -22,38 +22,65 @@ export const useListStore = create<ListStore>()(
         items: [],
         focusedIndex: 0,
         history: [],
+        filters: {
+          search: "",
+          showCompleted: true,
+        },
 
         reset: () => {
-          nextId = 1
-          set({ items: [], focusedIndex: 0, history: [] }, false, 'reset')
+          nextId = 1;
+          set(
+            {
+              items: [],
+              focusedIndex: 0,
+              history: [],
+              filters: { search: "", showCompleted: true },
+            },
+            false,
+            "reset"
+          );
         },
 
         saveToHistory: () =>
           set(
             (s) => ({ history: [...s.history, snapshot(s)] }),
             false,
-            'saveToHistory'
+            "saveToHistory"
           ),
 
-        addItem: (text, priority = 'medium', category = 'personal') =>
+        addItem: (
+          text,
+          priority = "medium",
+          category = "personal",
+          dueDate?: string
+        ) =>
           set(
-            (s) => ({
-              history: [...s.history, snapshot(s)],
-              items: [
-                ...s.items,
-                {
-                  id: nextId++,
-                  text,
-                  selected: false,
-                  priority,
-                  category,
-                  completed: false,
-                  createdAt: new Date(),
-                },
-              ],
-            }),
+            (s) => {
+              const highestId = s.items.reduce(
+                (max, item) => Math.max(max, item.id),
+                0
+              );
+              nextId = Math.max(nextId, highestId + 1);
+
+              return {
+                history: [...s.history, snapshot(s)],
+                items: [
+                  ...s.items,
+                  {
+                    id: nextId++,
+                    text,
+                    selected: false,
+                    priority,
+                    category,
+                    dueDate,
+                    completed: false,
+                    createdAt: new Date(),
+                  },
+                ],
+              };
+            },
             false,
-            'addItem'
+            "addItem"
           ),
 
         toggleItem: (id) =>
@@ -65,21 +92,42 @@ export const useListStore = create<ListStore>()(
               ),
             }),
             false,
-            'toggleItem'
+            "toggleItem"
           ),
-
+        toggleItemState: (id) =>
+          set(
+            (s) => ({
+              history: [...s.history, snapshot(s)],
+              items: s.items.map((item) =>
+                item.id === id
+                  ? {
+                      ...item,
+                      selected: !item.selected,
+                      completed: !item.completed,
+                      completedAt: item.completed ? undefined : new Date(),
+                    }
+                  : item
+              ),
+            }),
+            false,
+            "toggleItemState"
+          ),
         completedItem: (id) =>
           set(
             (s) => ({
               history: [...s.history, snapshot(s)],
               items: s.items.map((item) =>
                 item.id === id
-                  ? { ...item, completed: true, completedAt: new Date() }
+                  ? {
+                      ...item,
+                      completed: !item.completed,
+                      completedAt: item.completed ? undefined : new Date(),
+                    }
                   : item
               ),
             }),
             false,
-            'completeItem'
+            "completedItem"
           ),
 
         updateItem: (id, updates) =>
@@ -91,61 +139,70 @@ export const useListStore = create<ListStore>()(
               ),
             }),
             false,
-            'updateItem'
+            "updateItem"
+          ),
+
+        setFilters: (newFilters) =>
+          set(
+            (s) => ({
+              filters: { ...s.filters, ...newFilters },
+            }),
+            false,
+            "setFilters"
           ),
 
         removeSelected: () =>
           set(
             (s) => {
-              const newItems = s.items.filter((item) => !item.selected)
+              const newItems = s.items.filter((item) => !item.selected);
               return {
                 history: [...s.history, snapshot(s)],
                 items: newItems,
                 focusedIndex: calcFocusIndex(newItems, s.focusedIndex),
-              }
+              };
             },
             false,
-            'removeSelected'
+            "removeSelected"
           ),
 
         removeItem: (id: number) =>
           set(
             (s) => {
-              const newItems = s.items.filter((item) => item.id !== id)
+              const newItems = s.items.filter((item) => item.id !== id);
               return {
                 history: [...s.history, snapshot(s)],
                 items: newItems,
                 focusedIndex: calcFocusIndex(newItems, s.focusedIndex),
-              }
+              };
             },
             false,
-            'removeItem'
+            "removeItem"
           ),
 
         setFocusIndex: (index) =>
           set(
             (s) => {
-              if (index < 0 || index >= s.items.length) return s
-              return { focusedIndex: index }
+              if (index < 0 || index >= s.items.length) return s;
+              return { focusedIndex: index };
             },
             false,
-            'setFocusIndex'
+            "setFocusIndex"
           ),
 
         undo: () => {
-          const { history } = get()
-          if (!history.length) return false
-          const prev = history.at(-1)!
-          set({ ...prev, history: history.slice(0, -1) }, false, 'undo')
-          return true
+          const { history } = get();
+          if (!history.length) return false;
+          const prev = history.at(-1)!;
+          set({ ...prev, history: history.slice(0, -1) }, false, "undo");
+          return true;
         },
 
         getSelectedItem: () => get().items.find((item) => item.selected),
       }),
       {
-        name: 'listStore',
+        name: "listStore",
       }
     ),
-    { name: 'ListStore' }
+    { name: "ListStore" }
   )
-)
+);

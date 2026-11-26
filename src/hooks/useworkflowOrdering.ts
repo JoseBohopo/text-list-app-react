@@ -1,4 +1,4 @@
-import type { Item } from '../store/types/useListStore.types';
+import type { Item } from "../store/types/useListStore.types";
 
 export function useWorkflowOrdering(items: Item[]): Item[] {
   return [...items].sort((a, b) => {

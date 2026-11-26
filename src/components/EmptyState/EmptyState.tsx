@@ -1,4 +1,4 @@
-import styles from './styles/EmptyState.module.css';
+import styles from "./styles/EmptyState.module.css";
 
 export function EmptyState() {
   return (

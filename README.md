@@ -14,10 +14,14 @@ A accessible list manager built with React, TypeScript, and Zustand. Allows user
 - **Keyboard navigation** — Arrow keys, Home, End, Enter, Space, all supported
 - **Accessible** — ARIA roles, roving tabindex, focus management, live regions
 - **Portal-based modal** — rendered at the document body level to avoid stacking context issues
+- **Complete tasks** by clicking them; completed tasks remain visible by default
+- **Organize tasks** by priority, category, and due date
+- **Search and filter** by text, category, priority, and completion status
+- **Persist tasks and filters** in browser local storage
 
 ## Tech Stack
 
-- [React 18](https://react.dev/)
+- [React 19](https://react.dev/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [Zustand](https://zustand-demo.pmnd.rs/) — state management with devtools support
 - [Vite](https://vitejs.dev/) — build tool and dev server
@@ -26,6 +30,7 @@ A accessible list manager built with React, TypeScript, and Zustand. Allows user
 - CSS Modules — scoped styles
 
 ## Project Structure
+
 ```
 src/
 ├── main.tsx
@@ -67,6 +72,7 @@ src/
 - npm 9+
 
 ### Installation
+
 ```bash
 git clone https://github.com/your-username/your-repo.git
 cd your-repo
@@ -74,6 +80,7 @@ npm install
 ```
 
 ### Development
+
 ```bash
 npm run dev
 ```
@@ -81,6 +88,7 @@ npm run dev
 Opens the app at `http://localhost:5173`.
 
 ### Testing
+
 ```bash
 npm test           # watch mode
 npm run test:run   # single run (CI)
@@ -88,6 +96,7 @@ npm run test:ui    # visual UI
 ```
 
 ### Build
+
 ```bash
 npm run build
 ```
@@ -96,23 +105,23 @@ npm run build
 
 All application state lives in a single Zustand store:
 
-| State | Type | Description |
-|---|---|---|
-| `items` | `Item[]` | The list of text entries |
-| `focusedIndex` | `number` | Which item has keyboard focus |
-| `history` | `Snapshot[]` | Stack of previous states for undo |
+| State          | Type         | Description                       |
+| -------------- | ------------ | --------------------------------- |
+| `items`        | `Item[]`     | The list of text entries          |
+| `focusedIndex` | `number`     | Which item has keyboard focus     |
+| `history`      | `Snapshot[]` | Stack of previous states for undo |
 
 Every action that mutates the list (`addItem`, `toggleItem`, `removeSelected`, `removeItem`) saves a snapshot to `history` before applying the change, enabling unlimited undo.
 
 ## Keyboard Shortcuts
 
-| Key | Action |
-|---|---|
-| `Arrow Down` | Move focus to next item |
-| `Arrow Up` | Move focus to previous item |
-| `Home` | Move focus to first item |
-| `End` | Move focus to last item |
-| `Enter` / `Space` | Select or deselect focused item |
+| Key               | Action                                                        |
+| ----------------- | ------------------------------------------------------------- |
+| `Arrow Down`      | Move focus to next item                                       |
+| `Arrow Up`        | Move focus to previous item                                   |
+| `Home`            | Move focus to first item                                      |
+| `End`             | Move focus to last item                                       |
+| `Enter` / `Space` | Select and complete, or deselect and reopen, the focused item |
 
 ## Accessibility
 

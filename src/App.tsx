@@ -1,4 +1,5 @@
 import { Toolbar } from "./components/Toolbar/Toolbar";
+import { SearchFilter } from "./components/SearchFilter/SearchFilter";
 import { ItemList } from "./components/ItemList/ItemList";
 import styles from "./App.module.css";
 
@@ -8,8 +9,10 @@ export default function App() {
       <section className={styles.container} aria-labelledby="main-title">
         <h1 id="main-title">Stay Organized</h1>
         <p id="main-desc">
-          Capture your ideas and tasks in one place. Simple, fast, and distraction-free.
+          Capture your ideas and tasks in one place. Simple, fast, and
+          distraction-free.
         </p>
+        <SearchFilter />
         <ItemList />
         <Toolbar />
         <div id="status" className="sr-only" aria-live="polite" />
