@@ -1,6 +1,12 @@
 import styles from "./styles/EmptyState.module.css";
 
-export function EmptyState() {
+import { Button } from "../ui/Button/Button";
+
+interface Props {
+  readonly onAddItem: (trigger: HTMLButtonElement) => void;
+}
+
+export function EmptyState({ onAddItem }: Props) {
   return (
     <div className={styles.container}>
       <svg
@@ -17,6 +23,13 @@ export function EmptyState() {
       </svg>
       <h2>No items yet</h2>
       <p>Start by adding your first item to get organized</p>
+      <Button
+        type="button"
+        aria-haspopup="dialog"
+        onClick={(event) => onAddItem(event.currentTarget)}
+      >
+        Add your first item
+      </Button>
     </div>
   );
 }

@@ -30,6 +30,7 @@ A accessible list manager built with React, TypeScript, and Zustand. Allows user
 - **Persist tasks and filters** in browser local storage
 - **Edit items** — change their text, priority, category, or due date
 - **Task status** — pending, completed, or overdue based on the local date
+- **Load more tasks** in batches of 20
 
 ## Tech Stack
 

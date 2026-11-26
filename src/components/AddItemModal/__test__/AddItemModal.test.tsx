@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { AddItemModal } from "../AddItemModal";
 import { useListStore } from "../../../store/useListStore";
 import { createRef } from "react";
-import { Toolbar } from "../../Toolbar/Toolbar";
+import App from "../../../App";
 
 beforeEach(() =>
   useListStore.setState({ items: [], focusedIndex: 0, history: [] })
@@ -138,7 +138,7 @@ describe("AddItemModal", () => {
 
   it("closes the add dialog and returns focus on cancel", async () => {
     const user = userEvent.setup();
-    render(<Toolbar />);
+    render(<App />);
 
     const trigger = screen.getByRole("button", { name: /add item/i });
     await user.click(trigger);

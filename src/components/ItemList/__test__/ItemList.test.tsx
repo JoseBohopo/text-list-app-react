@@ -4,6 +4,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { ItemList } from "../ItemList";
 import { useListStore } from "../../../store/useListStore";
 
+import App from "../../../App";
 import { SearchFilter } from "../../SearchFilter/SearchFilter";
 import { Toolbar } from "../../Toolbar/Toolbar";
 
@@ -22,13 +23,38 @@ afterEach(() => {
 
 describe("ItemList", () => {
   it("renders all items", () => {
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
     expect(screen.getByText("first")).toBeInTheDocument();
     expect(screen.getByText("second")).toBeInTheDocument();
   });
 
+  it("opens the add dialog from the empty state and restores focus", async () => {
+    const user = userEvent.setup();
+    useListStore.getState().reset();
+    render(<App />);
+
+    const emptyButton = screen.getByRole("button", {
+      name: "Add your first item",
+    });
+
+    await user.click(emptyButton);
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(emptyButton).toHaveFocus();
+
+    await user.click(emptyButton);
+    await user.type(screen.getByLabelText("Item name"), "First task");
+    await user.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Add item",
+      })
+    );
+
+    expect(screen.getByText("First task")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add item" })).toHaveFocus();
+  });
+
   it("selects an item without completing it", async () => {
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
 
     const checkbox = screen.getByRole("checkbox", {
       name: "Select first for deletion",
@@ -58,7 +84,7 @@ describe("ItemList", () => {
     expect(done).toBeDefined();
     useListStore.getState().completedItem(done!.id);
 
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
 
     expect(
       within(screen.getByRole("button", { name: "Complete Past" })).getByText(
@@ -87,7 +113,7 @@ describe("ItemList", () => {
     vi.setSystemTime(new Date(2026, 10, 26, 23, 59, 59));
     useListStore.getState().addItem("Deadline", "medium", "work", "2026-11-26");
 
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
     const task = screen.getByRole("button", { name: "Complete Deadline" });
     expect(within(task).getByText("Pending")).toBeInTheDocument();
 
@@ -101,7 +127,7 @@ describe("ItemList", () => {
   });
 
   it("deletes an item on double click", async () => {
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
     await userEvent.dblClick(screen.getByText("first"));
     expect(useListStore.getState().items).toHaveLength(1);
     expect(useListStore.getState().items[0].text).toBe("second");
@@ -112,7 +138,7 @@ describe("ItemList", () => {
     render(
       <>
         <Toolbar />
-        <ItemList />
+        <ItemList onAddItem={vi.fn()} />
       </>
     );
 
@@ -139,7 +165,7 @@ describe("ItemList", () => {
   });
 
   it("saves the item in history before double click delete", async () => {
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
     await userEvent.dblClick(screen.getByText("first"));
 
     const lastSnapshot = useListStore.getState().history.at(-1);
@@ -165,7 +191,7 @@ describe("ItemList", () => {
       .getState()
       .addItem("old date", "medium", "work", "2026-03-15T00:00:00.000Z");
 
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
 
     expect(
       within(
@@ -181,7 +207,7 @@ describe("ItemList", () => {
 
   it("reaches and completes each task with the keyboard", async () => {
     const user = userEvent.setup();
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
 
     await user.tab();
     expect(
@@ -215,7 +241,7 @@ describe("ItemList", () => {
   });
 
   it("sets aria-pressed on completed item", async () => {
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
     await userEvent.click(screen.getByText("first"));
 
     expect(
@@ -224,7 +250,7 @@ describe("ItemList", () => {
   });
 
   it("completes and uncompletes an item on click", async () => {
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
     const task = screen.getByRole("button", { name: /^complete first\b/i });
 
     await userEvent.click(screen.getByText("first"));
@@ -237,7 +263,7 @@ describe("ItemList", () => {
   });
 
   it("completes an item with Enter", async () => {
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
     const task = screen.getByRole("button", { name: /^complete first\b/i });
 
     task.focus();
@@ -249,7 +275,7 @@ describe("ItemList", () => {
 
   it("keeps selection and completion independent", async () => {
     const user = userEvent.setup();
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
 
     const task = screen.getByRole("button", { name: /^complete first\b/i });
     const checkbox = screen.getByRole("checkbox", {
@@ -275,7 +301,7 @@ describe("ItemList", () => {
     render(
       <>
         <SearchFilter />
-        <ItemList />
+        <ItemList onAddItem={vi.fn()} />
       </>
     );
 
@@ -299,7 +325,7 @@ describe("ItemList", () => {
     useListStore.getState().addItem("third");
     const user = userEvent.setup();
 
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
     const first = screen.getByRole("button", { name: /^complete first\b/i });
     first.focus();
 
@@ -317,12 +343,12 @@ describe("ItemList", () => {
     render(
       <>
         <SearchFilter />
-        <ItemList />
+        <ItemList onAddItem={vi.fn()} />
       </>
     );
 
     await user.click(screen.getByText("first"));
-    const checkbox = screen.getByRole("checkbox", {
+    const checkbox = screen.getByRole("switch", {
       name: /show completed tasks/i,
     });
 
@@ -333,6 +359,80 @@ describe("ItemList", () => {
     expect(screen.getByText("first")).toBeInTheDocument();
   });
 
+  it("loads more tasks without hiding existing ones", async () => {
+    const user = userEvent.setup();
+    useListStore.getState().reset();
+
+    for (let i = 1; i <= 25; i++) {
+      useListStore.getState().addItem(`Task ${i}`);
+    }
+
+    render(<ItemList onAddItem={vi.fn()} />);
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(20);
+    expect(screen.queryByText("Task 25")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Load more tasks" }));
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(25);
+    expect(screen.getByText("Task 1")).toBeInTheDocument();
+    expect(screen.getByText("Task 25")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Load more tasks" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("filters tasks beyond the initially visible batch", () => {
+    useListStore.getState().reset();
+
+    for (let i = 1; i <= 25; i++) {
+      useListStore.getState().addItem(`Task ${i}`);
+    }
+
+    useListStore.getState().setFilters({ search: "Task 25" });
+    render(<ItemList onAddItem={vi.fn()} />);
+
+    expect(screen.getByText("Task 25")).toBeInTheDocument();
+  });
+
+  it("keeps focus on a task reordered beyond the visible batch", async () => {
+    const user = userEvent.setup();
+    useListStore.getState().reset();
+
+    for (let i = 1; i <= 25; i++) {
+      useListStore.getState().addItem(`Task ${i}`);
+    }
+
+    render(<ItemList onAddItem={vi.fn()} />);
+
+    const task = screen.getByRole("button", { name: "Complete Task 1" });
+    task.focus();
+    await user.keyboard("{Enter}");
+
+    expect(task).toHaveFocus();
+    expect(task).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("keeps focus when the last task was already visible", async () => {
+    const user = userEvent.setup();
+    useListStore.getState().reset();
+
+    for (let i = 1; i <= 21; i++) {
+      useListStore.getState().addItem(`Task ${i}`);
+    }
+
+    render(<ItemList onAddItem={vi.fn()} />);
+
+    const task = screen.getByRole("button", { name: "Complete Task 1" });
+    await user.click(task);
+    await user.click(screen.getByRole("button", { name: "Load more tasks" }));
+
+    expect(task).toHaveFocus();
+    expect(
+      screen.queryByRole("button", { name: "Load more tasks" })
+    ).not.toBeInTheDocument();
+  });
+
   it("combines category and priority filters", async () => {
     useListStore.getState().addItem("report", "high", "work");
     useListStore.getState().addItem("groceries", "low", "shopping");
@@ -340,10 +440,13 @@ describe("ItemList", () => {
     const user = userEvent.setup();
     render(
       <>
+        <Toolbar />
         <SearchFilter />
-        <ItemList />
+        <ItemList onAddItem={vi.fn()} />
       </>
     );
+
+    await user.click(screen.getByRole("button", { name: "Filters" }));
 
     await user.selectOptions(
       screen.getByRole("combobox", { name: /filter by category/i }),
@@ -369,7 +472,7 @@ describe("ItemList", () => {
 
   it("edits a task without completing it and reloads values on reopening", async () => {
     const user = userEvent.setup();
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
 
     await user.click(screen.getByRole("button", { name: "Edit first" }));
     await user.selectOptions(screen.getByLabelText("Priority"), "high");
@@ -396,7 +499,7 @@ describe("ItemList", () => {
   it("focuses the empty result when editing hides the task", async () => {
     const user = userEvent.setup();
     useListStore.getState().setFilters({ search: "first" });
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
 
     await user.click(screen.getByRole("button", { name: "Edit first" }));
     await user.clear(screen.getByLabelText("Item name"));
@@ -409,7 +512,7 @@ describe("ItemList", () => {
   it("moves focus to another task when completion hides the current one", async () => {
     const user = userEvent.setup();
     useListStore.getState().setFilters({ showCompleted: false });
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
 
     screen.getByRole("button", { name: "Complete first" }).focus();
     await user.keyboard("{Enter}");
@@ -425,7 +528,7 @@ describe("ItemList", () => {
       showCompleted: false,
       search: "first",
     });
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
 
     screen.getByRole("button", { name: "Complete first" }).focus();
     await user.keyboard("{Enter}");
@@ -438,7 +541,7 @@ describe("ItemList", () => {
     useListStore.getState().addItem("work two");
     useListStore.getState().setFilters({ search: "work" });
 
-    render(<ItemList />);
+    render(<ItemList onAddItem={vi.fn()} />);
     screen.getByRole("button", { name: /^complete work one\b/i }).focus();
 
     await userEvent.keyboard("{ArrowDown}");
