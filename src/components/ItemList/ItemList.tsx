@@ -98,7 +98,9 @@ export function ItemList() {
               </span>
               {item.dueDate && (
                 <span className={styles.dueDate}>
-                  {new Date(item.dueDate).toLocaleDateString(undefined, { timeZone: "UTC" })}
+                  {new Date(item.dueDate).toLocaleDateString(undefined, {
+                    timeZone: "UTC",
+                  })}
                 </span>
               )}
             </div>

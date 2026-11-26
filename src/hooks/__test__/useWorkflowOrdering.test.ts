@@ -54,10 +54,7 @@ describe("useWorkflowOrdering", () => {
 
   it("prioritizes items with dueDate over without", () => {
     const dueDate = "2026-03-15";
-    const items = [
-      createItem(),
-      createItem({ dueDate }),
-    ];
+    const items = [createItem(), createItem({ dueDate })];
     const sorted = useWorkflowOrdering(items);
     expect(sorted[0].dueDate).toEqual("2026-03-15");
   });

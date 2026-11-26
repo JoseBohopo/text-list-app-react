@@ -51,11 +51,7 @@ export function ConfirmDeleteModal({
         <Button ref={cancelRef} type="button" onClick={onCancel}>
           Cancel
         </Button>
-        <Button
-          type="button"
-          className={styles.danger}
-          onClick={onConfirm}
-        >
+        <Button type="button" className={styles.danger} onClick={onConfirm}>
           Delete tasks
         </Button>
       </div>

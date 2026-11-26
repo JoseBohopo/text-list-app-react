@@ -6,7 +6,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;

@@ -15,7 +15,9 @@ export function useKeyboardNavigation(
       const options = Array.from(
         list!.querySelectorAll<HTMLElement>('[role="option"]')
       );
-      const index = options.findIndex((option) => option === document.activeElement);
+      const index = options.findIndex(
+        (option) => option === document.activeElement
+      );
       if (index < 0) return;
 
       const positions: Record<string, number> = {

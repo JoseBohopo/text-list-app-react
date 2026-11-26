@@ -1,7 +1,7 @@
 ---
 name: Software Engineer
 description: Analyzes code and suggests architecture, implementation, UX, and testing improvements. Does not modify files or run commands.
-tools: ['read', 'search']
+tools: ["read", "search"]
 ---
 
 # Software Engineer

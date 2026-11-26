@@ -33,18 +33,22 @@ describe("useFilterItems", () => {
     });
 
     expect(result.map((item) => item.id)).toEqual([1]);
-    expect(useFilterItems(items, {
-      search: "REPORT",
-      categoryFilter: "shopping",
-      priorityFilter: "high",
-      showCompleted: true,
-    })).toHaveLength(0);
+    expect(
+      useFilterItems(items, {
+        search: "REPORT",
+        categoryFilter: "shopping",
+        priorityFilter: "high",
+        showCompleted: true,
+      })
+    ).toHaveLength(0);
   });
 
   it("hides completed items only when requested", () => {
-    expect(useFilterItems(items, { search: "", showCompleted: false }))
-      .toHaveLength(1);
-    expect(useFilterItems(items, { search: "", showCompleted: true }))
-      .toHaveLength(2);
+    expect(
+      useFilterItems(items, { search: "", showCompleted: false })
+    ).toHaveLength(1);
+    expect(
+      useFilterItems(items, { search: "", showCompleted: true })
+    ).toHaveLength(2);
   });
 });

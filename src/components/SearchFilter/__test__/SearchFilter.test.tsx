@@ -15,10 +15,10 @@ describe("SearchFilter", () => {
   it("updates search filter on input change", async () => {
     const user = userEvent.setup();
     render(<SearchFilter />);
-    
+
     const input = screen.getByPlaceholderText(/search/i);
     await user.type(input, "test");
-    
+
     expect(useListStore.getState().filters.search).toBe("test");
   });
 
@@ -31,10 +31,10 @@ describe("SearchFilter", () => {
   it("toggles completed checkbox", async () => {
     const user = userEvent.setup();
     render(<SearchFilter />);
-    
+
     const checkbox = screen.getByRole("checkbox");
     await user.click(checkbox);
-    
+
     expect(useListStore.getState().filters.showCompleted).toBe(false);
   });
 });

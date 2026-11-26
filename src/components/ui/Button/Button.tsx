@@ -5,7 +5,7 @@ import type { ButtonProps } from "./types/Button.types";
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     { variant = "primary", circle = false, className = "", children, ...props },
-    ref,
+    ref
   ) => {
     const classes = [
       styles.btn,
@@ -21,7 +21,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {children}
       </button>
     );
-  },
+  }
 );
 
 Button.displayName = "Button";

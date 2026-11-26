@@ -48,7 +48,12 @@ export const useListStore = create<ListStore>()(
             "saveToHistory"
           ),
 
-        addItem: (text, priority = "medium", category = "personal", dueDate?: string) =>
+        addItem: (
+          text,
+          priority = "medium",
+          category = "personal",
+          dueDate?: string
+        ) =>
           set(
             (s) => {
               const highestId = s.items.reduce(
@@ -58,7 +63,7 @@ export const useListStore = create<ListStore>()(
               nextId = Math.max(nextId, highestId + 1);
 
               return {
-                history: [...s.history, snapshot(s)], 
+                history: [...s.history, snapshot(s)],
                 items: [
                   ...s.items,
                   {

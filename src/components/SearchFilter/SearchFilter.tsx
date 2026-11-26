@@ -1,6 +1,6 @@
-import { useListStore } from '../../store/useListStore';
-import type { Category, Priority } from '../../store/types/useListStore.types';
-import styles from './styles/SearchFilter.module.css';
+import { useListStore } from "../../store/useListStore";
+import type { Category, Priority } from "../../store/types/useListStore.types";
+import styles from "./styles/SearchFilter.module.css";
 
 export function SearchFilter() {
   const { filters, setFilters } = useListStore();
@@ -18,9 +18,13 @@ export function SearchFilter() {
 
       <div className={styles.filterGroup}>
         <select
-          value={filters.categoryFilter || ''}
+          value={filters.categoryFilter || ""}
           onChange={(e) =>
-            setFilters({ categoryFilter: e.target.value ? (e.target.value as Category) : undefined })
+            setFilters({
+              categoryFilter: e.target.value
+                ? (e.target.value as Category)
+                : undefined,
+            })
           }
           className={styles.select}
           aria-label="Filter by category"
@@ -34,9 +38,13 @@ export function SearchFilter() {
         </select>
 
         <select
-          value={filters.priorityFilter || ''}
+          value={filters.priorityFilter || ""}
           onChange={(e) =>
-            setFilters({ priorityFilter: e.target.value ? (e.target.value as Priority) : undefined })
+            setFilters({
+              priorityFilter: e.target.value
+                ? (e.target.value as Priority)
+                : undefined,
+            })
           }
           className={styles.select}
           aria-label="Filter by priority"
