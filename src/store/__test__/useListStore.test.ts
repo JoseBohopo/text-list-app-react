@@ -9,6 +9,18 @@ describe("addItem", () => {
     expect(useListStore.getState().items).toHaveLength(1);
     expect(useListStore.getState().items[0].text).toBe("hello");
   });
+
+  it("avoids duplicate ids after restoring saved items", () => {
+    useListStore.getState().addItem("saved");
+    const savedItems = useListStore.getState().items;
+
+    useListStore.getState().reset();
+    useListStore.setState({ items: savedItems });
+    useListStore.getState().addItem("new");
+
+    const ids = useListStore.getState().items.map((item) => item.id);
+    expect(new Set(ids).size).toBe(2);
+  });
 });
 
 describe("toggleItem", () => {
@@ -121,5 +133,23 @@ describe("undo", () => {
     useListStore.getState().addItem("b");
     useListStore.getState().undo();
     expect(useListStore.getState().items).toHaveLength(1);
+  });
+
+  it("undoes completion and selection together", () => {
+    useListStore.getState().addItem("task");
+    const { id } = useListStore.getState().items[0];
+
+    useListStore.getState().toggleItemState(id);
+    expect(useListStore.getState().items[0]).toMatchObject({
+      selected: true,
+      completed: true,
+    });
+
+    expect(useListStore.getState().undo()).toBe(true);
+    expect(useListStore.getState().items[0]).toMatchObject({
+      selected: false,
+      completed: false,
+    });
+    expect(useListStore.getState().items[0].completedAt).toBeUndefined();
   });
 });

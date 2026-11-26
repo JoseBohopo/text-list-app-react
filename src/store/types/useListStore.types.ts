@@ -7,11 +7,18 @@ export interface Item {
   selected: boolean;
   priority: Priority;
   category: Category;
-  dueDate?: Date;
+  dueDate?: string;
   completed: boolean;
   createdAt: Date;
   completedAt?: Date;
   timeEstimate?:  '5min' | '30min' | '1h' | '2h+';
+}
+
+export interface FilterState {
+  search: string;
+  categoryFilter?: Category;
+  priorityFilter?: Priority;
+  showCompleted: boolean;
 }
 
 export interface Snapshot {
@@ -23,16 +30,19 @@ export interface ListStore {
   items: Item[];
   focusedIndex: number;
   history: Snapshot[];
+  filters: FilterState;
 
   reset: () => void;
   saveToHistory: () => void;
-  addItem: (text: string, priority?: Priority, category?: Category) => void;
+  addItem: (text: string, priority?: Priority, category?: Category, dueDate?: string) => void;
   toggleItem: (id: number) => void;
+  toggleItemState: (id: number) => void;
   removeSelected: () => void;
   removeItem: (id: number) => void;
   setFocusIndex: (index: number) => void;
   updateItem: (id: number, updates: Partial<Item>) => void;
   completedItem: (id: number) => void;
+  setFilters: (filters: Partial<FilterState>) => void;
   undo: () => boolean;
   getSelectedItem: () => Item | undefined;
 }

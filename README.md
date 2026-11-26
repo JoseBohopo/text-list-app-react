@@ -14,10 +14,14 @@ A accessible list manager built with React, TypeScript, and Zustand. Allows user
 - **Keyboard navigation** — Arrow keys, Home, End, Enter, Space, all supported
 - **Accessible** — ARIA roles, roving tabindex, focus management, live regions
 - **Portal-based modal** — rendered at the document body level to avoid stacking context issues
+- **Complete tasks** by clicking them; completed tasks remain visible by default
+- **Organize tasks** by priority, category, and due date
+- **Search and filter** by text, category, priority, and completion status
+- **Persist tasks and filters** in browser local storage
 
 ## Tech Stack
 
-- [React 18](https://react.dev/)
+- [React 19](https://react.dev/)
 - [TypeScript](https://www.typescriptlang.org/)
 - [Zustand](https://zustand-demo.pmnd.rs/) — state management with devtools support
 - [Vite](https://vitejs.dev/) — build tool and dev server
@@ -112,7 +116,7 @@ Every action that mutates the list (`addItem`, `toggleItem`, `removeSelected`, `
 | `Arrow Up` | Move focus to previous item |
 | `Home` | Move focus to first item |
 | `End` | Move focus to last item |
-| `Enter` / `Space` | Select or deselect focused item |
+| `Enter` / `Space` | Select and complete, or deselect and reopen, the focused item |
 
 ## Accessibility
 

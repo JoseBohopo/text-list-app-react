@@ -67,16 +67,7 @@ export function AddItemModal({ isOpen, onClose, triggerRef }: Props) {
     }
 
     setError(null);
-    addItem(value, priority, category);
-
-    if (dueDate) {
-      const { items } = useListStore.getState();
-      const lastItem = items.at(-1);
-      if (!lastItem) return;
-      useListStore
-        .getState()
-        .updateItem(lastItem.id, { dueDate: new Date(dueDate) });
-    }
+    addItem(value, priority, category, dueDate || undefined);
 
     if (inputRef.current) {
       inputRef.current.value = "";
@@ -84,6 +75,7 @@ export function AddItemModal({ isOpen, onClose, triggerRef }: Props) {
 
     setPriority("medium");
     setCategory("personal");
+    setDueDate("");
     onClose();
     triggerRef.current?.focus();
   }

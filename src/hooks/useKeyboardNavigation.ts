@@ -3,34 +3,37 @@ import { useListStore } from "../store/useListStore";
 
 export function useKeyboardNavigation(
   listRef: React.RefObject<HTMLUListElement | null>,
+  itemCount: number
 ) {
-  const { items, focusedIndex, setFocusIndex, toggleItem, saveToHistory } =
-    useListStore();
+  const { setFocusIndex } = useListStore();
 
   useEffect(() => {
-    const el = listRef?.current;
-    if (!el) return;
+    const list = listRef.current;
+    if (!list) return;
 
-    function handleKeyDown(e: KeyboardEvent) {
-      if (!items.length) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      const options = Array.from(
+        list!.querySelectorAll<HTMLElement>('[role="option"]')
+      );
+      const index = options.findIndex((option) => option === document.activeElement);
+      if (index < 0) return;
 
-      const actions: Record<string, () => void> = {
-        ArrowDown: () => setFocusIndex(focusedIndex + 1),
-        ArrowUp: () => setFocusIndex(focusedIndex - 1),
-        Home: () => setFocusIndex(0),
-        End: () => setFocusIndex(items.length - 1),
-        Enter: () => toggleItem(items[focusedIndex].id),
-        " ": () => toggleItem(items[focusedIndex].id),
+      const positions: Record<string, number> = {
+        ArrowDown: Math.min(index + 1, options.length - 1),
+        ArrowUp: Math.max(index - 1, 0),
+        Home: 0,
+        End: options.length - 1,
       };
 
-      if (actions[e.key]) {
-        e.preventDefault();
-        saveToHistory();
-        actions[e.key]();
-      }
+      const nextIndex = positions[event.key];
+      if (nextIndex === undefined) return;
+
+      event.preventDefault();
+      options[nextIndex].focus();
+      setFocusIndex(nextIndex);
     }
 
-    el.addEventListener("keydown", handleKeyDown);
-    return () => el.removeEventListener("keydown", handleKeyDown);
-  }, [items, focusedIndex, setFocusIndex, toggleItem, saveToHistory, listRef]);
+    list.addEventListener("keydown", handleKeyDown);
+    return () => list.removeEventListener("keydown", handleKeyDown);
+  }, [listRef, itemCount, setFocusIndex]);
 }
