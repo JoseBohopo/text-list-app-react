@@ -39,6 +39,7 @@ A accessible list manager built with React, TypeScript, and Zustand. Allows user
 - [Vite](https://vitejs.dev/) — build tool and dev server
 - [Vitest](https://vitest.dev/) — unit and component testing
 - [Testing Library](https://testing-library.com/) — component testing utilities
+- [Playwright](https://playwright.dev/) — cross-browser end-to-end testing
 - CSS Modules — scoped styles
 
 ## Project Structure
@@ -81,20 +82,20 @@ src/
 ### Prerequisites
 
 - Node.js ^20.19.0 or >=22.12.0
-- npm 9+
+- pnpm 9+
 
 ### Installation
 
 ```bash
 git clone https://github.com/JoseBohopo/text-list-app-react.git
 cd text-list-app-react
-npm install
+pnpm install
 ```
 
 ### Development
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
 Opens the app at `http://localhost:5173`.
@@ -102,10 +103,25 @@ Opens the app at `http://localhost:5173`.
 ### Testing
 
 ```bash
-npm test           # watch mode
-npm run test:run   # single run (CI)
-npm run test:ui    # visual UI
+pnpm test           # watch mode
+pnpm run test:run   # single run (CI)
+pnpm run test:ui    # visual UI
 ```
+
+#### End-to-end tests
+
+Playwright tests run against the production build in Chromium, Firefox and WebKit, plus mobile and tablet viewports (Pixel 7, iPhone 13 and iPad). Each screen is checked in its initial state and after an action.
+
+```bash
+npx playwright install chromium firefox webkit   # first time only
+pnpm run test:e2e
+```
+
+They cover adding, editing, selecting, completing, deleting and undoing tasks, search and filters, bulk delete with hidden tasks, theme and persistence, and storage warnings.
+
+#### Browser support
+
+The app targets the latest versions of Chrome, Firefox and Safari. Playwright's WebKit is used as a proxy for Safari. It does not replace testing on real Safari or with real screen readers.
 
 ### Formatting
 
@@ -114,12 +130,12 @@ The `format` script formats project files using Prettier.
 ### Build
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 ### Continuous integration
 
-GitHub Actions runs linting, tests and a production build on every push and pull request.
+GitHub Actions runs linting, unit tests, a production build and the Playwright end-to-end tests on every push and pull request.
 
 ## State Management
 
