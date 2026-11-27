@@ -10,7 +10,7 @@ describe("useWorkflowOrdering", () => {
     priority: "medium",
     category: "personal",
     completed: false,
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
     ...overrides,
   });
 
@@ -63,10 +63,10 @@ describe("useWorkflowOrdering", () => {
     const early = new Date("2024-01-01");
     const late = new Date("2024-01-02");
     const items = [
-      createItem({ createdAt: late }),
-      createItem({ createdAt: early }),
+      createItem({ createdAt: late.toISOString() }),
+      createItem({ createdAt: early.toISOString() }),
     ];
     const sorted = useWorkflowOrdering(items);
-    expect(sorted[0].createdAt).toEqual(early);
+    expect(sorted[0].createdAt).toEqual(early.toISOString());
   });
 });

@@ -10,7 +10,7 @@ const items: Item[] = [
     completed: false,
     priority: "high",
     category: "work",
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
   },
   {
     id: 2,
@@ -19,7 +19,7 @@ const items: Item[] = [
     completed: true,
     priority: "low",
     category: "shopping",
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
   },
 ];
 

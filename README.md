@@ -17,16 +17,16 @@ A accessible list manager built with React, TypeScript, and Zustand. Allows user
 ## Features
 
 - **Add items** via a modal dialog — empty entries are rejected with inline validation
-- **Select items** using their checkboxes — multiple selections supported
+- **Select items** using their checkboxes or task buttons — multiple selections supported
+- **Double-click a task** to complete or reopen it without changing its selection
+- **Complete tasks** using the circle button; completed tasks remain visible by default
 - **Delete selected items** via the Delete button
-- **Double-click to delete** a single item directly without selecting it first
 - **Undo** any action (add, select, deselect, delete) with full history support
 - **Keyboard navigation** — Arrow keys, Home, End, Enter, Space, all supported
 - **Accessible** — ARIA roles, Keyboard navigation with Tab and arrow keys, focus management, live regions
 - **Portal-based modal** — rendered at the document body level to avoid stacking context issues
-- **Complete tasks** by clicking them; completed tasks remain visible by default
 - **Organize tasks** by priority, category, and due date
-- **Search and filter** by text, category, priority, and completion status
+- **Search and filter** by text, category, priority, and completion status. The filter panel closes when clicking outside or pressing Escape.
 - **Persist tasks and filters** in browser local storage
 - **Edit items** — change their text, priority, category, or due date
 - **Task status** — pending, completed, or overdue based on the local date
@@ -132,17 +132,18 @@ All application state lives in a single Zustand store:
 | `focusedIndex` | `number`     | Which item has keyboard focus     |
 | `history`      | `Snapshot[]` | Stack of previous states for undo |
 
-Every action that mutates the list (`addItem`, `toggleItem`, `removeSelected`, `removeItem`) saves a snapshot to `history` before applying the change, enabling unlimited undo.
+Every action that mutates the list (`addItem`, `toggleItem`, `removeSelected`) saves a snapshot to `history` before applying the change, enabling unlimited undo.
 
 ## Keyboard Shortcuts
 
-| Key                       | Action                                  |
-| ------------------------- | --------------------------------------- |
-| `Arrow Down` / `Arrow Up` | Move between task buttons               |
-| `Home` / `End`            | Move to the first or last task button   |
-| `Enter` / `Space`         | Complete or reopen the focused task     |
-| `Space`                   | Select or deselect the focused checkbox |
-| `Tab`                     | Move between controls                   |
+| Key                       | Action                                    |
+| ------------------------- | ----------------------------------------- |
+| `Arrow Down` / `Arrow Up` | Move between task buttons                 |
+| `Home` / `End`            | Move to the first or last task button     |
+| `Enter` / `Space`         | Select or deselect with the task button   |
+| `Enter` / `Space`         | Complete or reopen with the circle button |
+| `Space`                   | Select or deselect the focused checkbox   |
+| `Tab`                     | Move between controls                     |
 
 ## Accessibility
 

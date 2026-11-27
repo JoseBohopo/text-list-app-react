@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "../ui/Button/Button";
 
 import { useListStore } from "../../store/useListStore";
@@ -8,11 +8,28 @@ import styles from "./styles/SearchFilter.module.css";
 export function SearchFilter() {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const filterContainerRef = useRef<HTMLDivElement>(null);
   const { filters, setFilters } = useListStore();
 
   const activeFilterCount =
     Number(Boolean(filters.categoryFilter)) +
     Number(Boolean(filters.priorityFilter));
+
+  useEffect(() => {
+    if (!isFiltersOpen) return;
+
+    function handleDocumentClick(event: MouseEvent) {
+      if (
+        event.target instanceof Node &&
+        !filterContainerRef.current?.contains(event.target)
+      ) {
+        setIsFiltersOpen(false);
+      }
+    }
+
+    document.addEventListener("click", handleDocumentClick);
+    return () => document.removeEventListener("click", handleDocumentClick);
+  }, [isFiltersOpen]);
 
   return (
     <div className={styles.container}>
@@ -26,6 +43,7 @@ export function SearchFilter() {
           aria-label="Search tasks"
         />
         <div
+        ref={filterContainerRef}
           onKeyDown={(event) => {
             if (event.key !== "Escape" || !isFiltersOpen) return;
             event.preventDefault();

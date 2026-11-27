@@ -78,17 +78,14 @@ describe("SearchFilter", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "Filters" }));
+    const filters = screen.getByRole("button", { name: "Filters" });
 
-    const category = screen.getByLabelText("Filter by category");
-    const priority = screen.getByLabelText("Filter by priority");
-    const completed = screen.getByRole("switch", {
-      name: "Show completed tasks",
-    });
-
-    expect(category).toBeDisabled();
-    expect(priority).toBeDisabled();
-    expect(completed).toBeDisabled();
+    await user.click(filters);
+    expect(screen.getByLabelText("Filter by category")).toBeDisabled();
+    expect(screen.getByLabelText("Filter by priority")).toBeDisabled();
+    expect(
+      screen.getByRole("switch", { name: "Show completed tasks" })
+    ).toBeDisabled();
 
     await user.click(screen.getByRole("button", { name: "Add item" }));
     await user.type(screen.getByLabelText("Item name"), "First task");
@@ -98,18 +95,24 @@ describe("SearchFilter", () => {
       })
     );
 
-    expect(category).toBeEnabled();
-    expect(priority).toBeEnabled();
-    expect(completed).toBeEnabled();
+    await user.click(filters);
+    expect(screen.getByLabelText("Filter by category")).toBeEnabled();
+    expect(screen.getByLabelText("Filter by priority")).toBeEnabled();
+    expect(
+      screen.getByRole("switch", { name: "Show completed tasks" })
+    ).toBeEnabled();
 
     await user.click(
       screen.getByRole("checkbox", { name: "Select First task for deletion" })
     );
     await user.click(screen.getByRole("button", { name: /delete selected/i }));
 
-    expect(category).toBeDisabled();
-    expect(priority).toBeDisabled();
-    expect(completed).toBeDisabled();
+    await user.click(filters);
+    expect(screen.getByLabelText("Filter by category")).toBeDisabled();
+    expect(screen.getByLabelText("Filter by priority")).toBeDisabled();
+    expect(
+      screen.getByRole("switch", { name: "Show completed tasks" })
+    ).toBeDisabled();
   });
   it("toggles completed checkbox", async () => {
     const user = userEvent.setup();
@@ -123,5 +126,34 @@ describe("SearchFilter", () => {
     await user.click(checkbox);
 
     expect(useListStore.getState().filters.showCompleted).toBe(false);
+  });
+
+  it("closes filters on outside click but not on interaction inside", async () => {
+    const user = userEvent.setup();
+    useListStore.getState().addItem("task");
+    render(<SearchFilter />);
+
+    const button = screen.getByRole("button", { name: "Filters" });
+    const search = screen.getByRole("textbox", { name: "Search tasks" });
+
+    await user.click(button);
+    await user.selectOptions(
+      screen.getByLabelText("Filter by category"),
+      "work"
+    );
+
+    expect(button).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("group", { name: "Filters" })).toBeInTheDocument();
+
+    await user.click(search);
+
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(
+      screen.queryByRole("group", { name: "Filters" })
+    ).not.toBeInTheDocument();
+    expect(search).toHaveFocus();
+
+    await user.click(button);
+    expect(screen.getByLabelText("Filter by category")).toHaveValue("work");
   });
 });

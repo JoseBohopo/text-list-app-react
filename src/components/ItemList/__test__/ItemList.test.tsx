@@ -1,4 +1,4 @@
-import { act, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { ItemList } from "../ItemList";
@@ -87,22 +87,22 @@ describe("ItemList", () => {
     render(<ItemList onAddItem={vi.fn()} />);
 
     expect(
-      within(screen.getByRole("button", { name: "Complete Past" })).getByText(
+      within(screen.getByRole("button", { name: "Select Past" })).getByText(
         "Overdue"
       )
     ).toBeInTheDocument();
     expect(
-      within(screen.getByRole("button", { name: "Complete Today" })).getByText(
+      within(screen.getByRole("button", { name: "Select Today" })).getByText(
         "Pending"
       )
     ).toBeInTheDocument();
     expect(
-      within(
-        screen.getByRole("button", { name: "Complete No date" })
-      ).getByText("Pending")
+      within(screen.getByRole("button", { name: "Select No date" })).getByText(
+        "Pending"
+      )
     ).toBeInTheDocument();
     expect(
-      within(screen.getByRole("button", { name: "Complete Done" })).getByText(
+      within(screen.getByRole("button", { name: "Select Done" })).getByText(
         "Completed"
       )
     ).toBeInTheDocument();
@@ -114,7 +114,7 @@ describe("ItemList", () => {
     useListStore.getState().addItem("Deadline", "medium", "work", "2026-11-26");
 
     render(<ItemList onAddItem={vi.fn()} />);
-    const task = screen.getByRole("button", { name: "Complete Deadline" });
+    const task = screen.getByRole("button", { name: "Select Deadline" });
     expect(within(task).getByText("Pending")).toBeInTheDocument();
 
     act(() => {
@@ -124,13 +124,6 @@ describe("ItemList", () => {
     expect(within(task).getByText("Overdue")).toBeInTheDocument();
     expect(task).toHaveAccessibleDescription(/^Overdue\b/);
     expect(task.closest("li")).toHaveClass(styles.overdue);
-  });
-
-  it("deletes an item on double click", async () => {
-    render(<ItemList onAddItem={vi.fn()} />);
-    await userEvent.dblClick(screen.getByText("first"));
-    expect(useListStore.getState().items).toHaveLength(1);
-    expect(useListStore.getState().items[0].text).toBe("second");
   });
 
   it("deletes only selected tasks and restores them with undo", async () => {
@@ -164,17 +157,6 @@ describe("ItemList", () => {
     });
   });
 
-  it("saves the item in history before double click delete", async () => {
-    render(<ItemList onAddItem={vi.fn()} />);
-    await userEvent.dblClick(screen.getByText("first"));
-
-    const lastSnapshot = useListStore.getState().history.at(-1);
-    expect(lastSnapshot?.items.map((item) => item.text)).toContain("first");
-    expect(
-      useListStore.getState().items.map((item) => item.text)
-    ).not.toContain("first");
-  });
-
   it("shows new and previously saved dates on the correct day", () => {
     vi.spyOn(Date.prototype, "toLocaleDateString").mockImplementation(function (
       this: Date,
@@ -195,26 +177,35 @@ describe("ItemList", () => {
 
     expect(
       within(
-        screen.getByRole("button", { name: /^complete new date\b/i })
+        screen.getByRole("button", { name: /^select new date\b/i })
       ).getByText("3/15/2026")
     ).toBeInTheDocument();
     expect(
       within(
-        screen.getByRole("button", { name: /^complete old date\b/i })
+        screen.getByRole("button", { name: /^select old date\b/i })
       ).getByText("3/15/2026")
     ).toBeInTheDocument();
   });
 
-  it("reaches and completes each task with the keyboard", async () => {
+  it("selects and completes tasks with the keyboard", async () => {
     const user = userEvent.setup();
     render(<ItemList onAddItem={vi.fn()} />);
 
     await user.tab();
     expect(
-      screen.getByRole("checkbox", {
-        name: "Select first for deletion",
-      })
+      screen.getByRole("checkbox", { name: "Select first for deletion" })
     ).toHaveFocus();
+
+    await user.tab();
+    const selectFirst = screen.getByRole("button", { name: "Select first" });
+    expect(selectFirst).toHaveFocus();
+
+    await user.keyboard("{Enter}");
+    expect(selectFirst).toHaveAttribute("aria-pressed", "true");
+    expect(useListStore.getState().items[0]).toMatchObject({
+      selected: true,
+      completed: false,
+    });
 
     await user.tab();
     expect(
@@ -226,23 +217,31 @@ describe("ItemList", () => {
 
     await user.tab();
     expect(
-      screen.getByRole("checkbox", {
-        name: "Select second for deletion",
-      })
+      screen.getByRole("checkbox", { name: "Select second for deletion" })
     ).toHaveFocus();
 
     await user.tab();
-    expect(
-      screen.getByRole("button", { name: "Complete second" })
-    ).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Select second" })).toHaveFocus();
+
+    await user.tab();
+    const completeSecond = screen.getByRole("button", {
+      name: "Complete second",
+    });
+    expect(completeSecond).toHaveFocus();
 
     await user.keyboard("{Enter}");
-    expect(useListStore.getState().items[1].completed).toBe(true);
+    expect(completeSecond).toHaveFocus();
+    expect(useListStore.getState().items[1]).toMatchObject({
+      selected: false,
+      completed: true,
+    });
   });
 
   it("sets aria-pressed on completed item", async () => {
     render(<ItemList onAddItem={vi.fn()} />);
-    await userEvent.click(screen.getByText("first"));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Complete first" })
+    );
 
     expect(
       screen.getByRole("button", { name: /^complete first\b/i })
@@ -253,11 +252,11 @@ describe("ItemList", () => {
     render(<ItemList onAddItem={vi.fn()} />);
     const task = screen.getByRole("button", { name: /^complete first\b/i });
 
-    await userEvent.click(screen.getByText("first"));
+    await userEvent.click(task);
     expect(useListStore.getState().items[0].completed).toBe(true);
     expect(task.closest("li")).toHaveClass(styles.completed);
 
-    await userEvent.click(screen.getByText("first"));
+    await userEvent.click(task);
     expect(useListStore.getState().items[0].completed).toBe(false);
     expect(task.closest("li")).not.toHaveClass(styles.completed);
   });
@@ -296,6 +295,99 @@ describe("ItemList", () => {
     });
   });
 
+  it("selects a task with one click without completing it", async () => {
+    const user = userEvent.setup();
+    render(<ItemList onAddItem={vi.fn()} />);
+
+    await user.click(screen.getByRole("button", { name: "Select first" }));
+
+    expect(useListStore.getState().items[0]).toMatchObject({
+      selected: true,
+      completed: false,
+    });
+  });
+
+  it.each([
+    [false, false],
+    [false, true],
+    [true, false],
+    [true, true],
+  ])(
+    "toggles completion with double click (selected=%s, completed=%s)",
+    async (initiallySelected, initiallyCompleted) => {
+      const user = userEvent.setup();
+      const first = useListStore.getState().items[0];
+
+      if (initiallySelected) {
+        useListStore.getState().toggleItem(first.id);
+      }
+
+      if (initiallyCompleted) {
+        useListStore.getState().completedItem(first.id);
+      }
+
+      const historyLength = useListStore.getState().history.length;
+
+      render(
+        <>
+          <Toolbar />
+          <ItemList onAddItem={vi.fn()} />
+        </>
+      );
+
+      await user.dblClick(screen.getByRole("button", { name: "Select first" }));
+
+      expect(useListStore.getState().items).toHaveLength(2);
+      expect(useListStore.getState().history).toHaveLength(historyLength + 1);
+
+      expect(useListStore.getState().items[0]).toMatchObject({
+        selected: initiallySelected,
+        completed: !initiallyCompleted,
+      });
+
+      await user.click(
+        screen.getByRole("button", { name: "Undo last action" })
+      );
+
+      expect(useListStore.getState().history).toHaveLength(historyLength);
+
+      expect(useListStore.getState().items[0]).toMatchObject({
+        selected: initiallySelected,
+        completed: initiallyCompleted,
+      });
+    }
+  );
+
+  it("reports an intervening change without completing the task", async () => {
+    const user = userEvent.setup();
+    render(<ItemList onAddItem={vi.fn()} />);
+    const task = screen.getByRole("button", { name: "Select first" });
+
+    fireEvent.click(task, { detail: 1 });
+
+    act(() => {
+      useListStore.getState().addItem("intervening");
+    });
+
+    fireEvent.click(task, { detail: 2 });
+    const historyLength = useListStore.getState().history.length;
+    fireEvent.dblClick(task, { detail: 2 });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Could not complete the task. Please try again."
+    );
+    expect(useListStore.getState().history).toHaveLength(historyLength);
+    expect(useListStore.getState().items[0]).toMatchObject({
+      selected: false,
+      completed: false,
+    });
+    expect(screen.getByText("intervening")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Complete first" }));
+
+    expect(useListStore.getState().items[0].completed).toBe(true);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("filters the list by search and shows an empty result", async () => {
     const user = userEvent.setup();
     render(
@@ -326,16 +418,14 @@ describe("ItemList", () => {
     const user = userEvent.setup();
 
     render(<ItemList onAddItem={vi.fn()} />);
-    const first = screen.getByRole("button", { name: /^complete first\b/i });
-    first.focus();
+    const first = screen.getByRole("button", { name: "Select first" });
 
-    await user.keyboard("{Enter}");
+    await user.dblClick(first);
+    expect(useListStore.getState().items[0].completed).toBe(true);
     expect(first).toHaveFocus();
 
     await user.keyboard("{ArrowUp}");
-    expect(
-      screen.getByRole("button", { name: /^complete third\b/i })
-    ).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Select third" })).toHaveFocus();
   });
 
   it("hides and restores completed tasks through the filter", async () => {
@@ -347,7 +437,7 @@ describe("ItemList", () => {
       </>
     );
 
-    await user.click(screen.getByText("first"));
+    await user.click(screen.getByRole("button", { name: "Complete first" }));
     await user.click(screen.getByRole("button", { name: "Filters" }));
     const checkbox = screen.getByRole("switch", {
       name: /show completed tasks/i,
@@ -428,7 +518,7 @@ describe("ItemList", () => {
     await user.click(task);
     await user.click(screen.getByRole("button", { name: "Load more tasks" }));
 
-    expect(task).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Select Task 1" })).toHaveFocus();
     expect(
       screen.queryByRole("button", { name: "Load more tasks" })
     ).not.toBeInTheDocument();
@@ -518,9 +608,7 @@ describe("ItemList", () => {
     screen.getByRole("button", { name: "Complete first" }).focus();
     await user.keyboard("{Enter}");
 
-    expect(
-      screen.getByRole("button", { name: "Complete second" })
-    ).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Select second" })).toHaveFocus();
   });
 
   it("focuses the empty result when completion hides the last visible task", async () => {
@@ -543,17 +631,17 @@ describe("ItemList", () => {
     useListStore.getState().setFilters({ search: "work" });
 
     render(<ItemList onAddItem={vi.fn()} />);
-    screen.getByRole("button", { name: /^complete work one\b/i }).focus();
+    screen.getByRole("button", { name: /^select work one\b/i }).focus();
 
     await userEvent.keyboard("{ArrowDown}");
     expect(
-      screen.getByRole("button", { name: /^complete work two\b/i })
+      screen.getByRole("button", { name: /^select work two\b/i })
     ).toHaveFocus();
 
     await userEvent.keyboard("{ArrowDown}");
     expect(useListStore.getState().focusedIndex).toBe(1);
     expect(
-      screen.getByRole("button", { name: /^complete work two\b/i })
+      screen.getByRole("button", { name: /^select work two\b/i })
     ).toHaveFocus();
   });
 });

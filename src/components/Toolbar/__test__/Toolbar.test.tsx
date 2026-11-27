@@ -23,6 +23,57 @@ describe("Toolbar", () => {
     expect(screen.getByRole("button", { name: /delete/i })).toBeDisabled();
   });
 
+  it("disables select all when no tasks match", () => {
+    render(<Toolbar />);
+
+    expect(
+      screen.getByRole("checkbox", { name: "Select all filtered tasks" })
+    ).toBeDisabled();
+  });
+
+  it("selects filtered tasks, including unloaded ones, without changing hidden tasks", async () => {
+    const user = userEvent.setup();
+
+    for (let i = 1; i <= 25; i++) {
+      useListStore.getState().addItem(`Task ${i}`);
+    }
+    useListStore.getState().addItem("Hidden");
+
+    const items = useListStore.getState().items;
+    useListStore.getState().toggleItem(items[0].id);
+    useListStore.getState().toggleItem(items[25].id);
+    useListStore.getState().setFilters({ search: "Task" });
+
+    render(<Toolbar />);
+
+    const selectAll = screen.getByRole("checkbox", {
+      name: "Select all filtered tasks",
+    });
+    expect(selectAll).toBePartiallyChecked();
+
+    await user.click(selectAll);
+    expect(useListStore.getState().items.every((item) => item.selected)).toBe(
+      true
+    );
+
+    await user.click(screen.getByRole("button", { name: "Undo last action" }));
+    expect(selectAll).toBePartiallyChecked();
+    expect(
+      useListStore.getState().items.filter((item) => item.selected)
+    ).toHaveLength(2);
+
+    await user.click(selectAll);
+    await user.click(selectAll);
+
+    expect(
+      useListStore
+        .getState()
+        .items.slice(0, 25)
+        .every((item) => !item.selected)
+    ).toBe(true);
+    expect(useListStore.getState().items[25].selected).toBe(true);
+  });
+
   it("Undo is disabled when history is empty", () => {
     render(<Toolbar />);
     expect(screen.getByRole("button", { name: /undo/i })).toBeDisabled();
@@ -44,7 +95,7 @@ describe("Toolbar", () => {
           priority: "medium",
           category: "personal",
           completed: false,
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
         },
       ],
       focusedIndex: 0,
@@ -65,7 +116,7 @@ describe("Toolbar", () => {
           priority: "medium",
           category: "personal",
           completed: false,
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
         },
       ],
       focusedIndex: 0,
@@ -75,6 +126,51 @@ describe("Toolbar", () => {
     await userEvent.click(screen.getByRole("button", { name: /undo/i }));
     expect(useListStore.getState().items).toHaveLength(0);
   });
+
+  it.each([false, true])(
+    "undoes deletion and then selection (hidden=%s)",
+    async (hidden) => {
+      const user = userEvent.setup();
+      const store = useListStore.getState();
+
+      store.addItem("task");
+      store.addItem("other");
+      const id = useListStore.getState().items[0].id;
+      store.toggleItem(id);
+
+      if (hidden) {
+        store.setFilters({ search: "other" });
+      }
+
+      render(<Toolbar />);
+
+      await user.click(
+        screen.getByRole("button", { name: "Delete selected item" })
+      );
+
+      if (hidden) {
+        await user.click(screen.getByRole("button", { name: "Delete tasks" }));
+      }
+
+      expect(useListStore.getState().items).toHaveLength(1);
+
+      await user.click(
+        screen.getByRole("button", { name: "Undo last action" })
+      );
+      expect(useListStore.getState().items[0]).toMatchObject({
+        text: "task",
+        selected: true,
+      });
+
+      await user.click(
+        screen.getByRole("button", { name: "Undo last action" })
+      );
+      expect(useListStore.getState().items[0]).toMatchObject({
+        text: "task",
+        selected: false,
+      });
+    }
+  );
 
   it("confirms before deleting hidden selected tasks", async () => {
     const user = userEvent.setup();
