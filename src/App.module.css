@@ -47,6 +47,14 @@
   font-weight: 500;
 }
 
+.storageWarning {
+  padding: 1rem;
+  color: var(--text);
+  background: var(--bg-secondary);
+  border: 2px solid #ef4444;
+  border-radius: 0.5rem;
+}
+
 .stickyControls {
   position: sticky;
   top: 0;

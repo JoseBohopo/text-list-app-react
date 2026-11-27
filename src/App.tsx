@@ -2,6 +2,8 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { AddItemModal } from "./components/AddItemModal/AddItemModal";
 import { Button } from "./components/ui/Button/Button";
 
+import { usePersistenceStatus } from "./store/usePersistenceStatus";
+
 import { Toolbar } from "./components/Toolbar/Toolbar";
 import { SearchFilter } from "./components/SearchFilter/SearchFilter";
 import { ItemList } from "./components/ItemList/ItemList";
@@ -12,6 +14,8 @@ export default function App() {
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const addTriggerRef = useRef<HTMLButtonElement>(null);
   const restoreAddFocus = useRef(false);
+
+  const persistenceStatus = usePersistenceStatus((state) => state.status);
 
   function openAdd(trigger: HTMLButtonElement) {
     addTriggerRef.current = trigger;
@@ -56,6 +60,13 @@ export default function App() {
             Add item
           </Button>
         </header>
+        {persistenceStatus !== "ok" && (
+          <div role="alert" className={styles.storageWarning}>
+            {persistenceStatus === "read-error"
+              ? "Could not load saved tasks. Saving is disabled to protect existing data. Copy any new tasks before refreshing or closing this page."
+              : "Your changes could not be saved. Copy your tasks before refreshing or closing this page."}
+          </div>
+        )}
         <div className={styles.stickyControls}>
           <SearchFilter />
           <Toolbar />

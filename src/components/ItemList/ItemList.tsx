@@ -34,8 +34,8 @@ export function ItemList({ onAddItem }: Props) {
   const {
     items,
     filters,
-    focusedIndex,
     setFocusIndex,
+    focusedIndex,
     toggleItem,
     completedItem,
     completeAfterSelectionClick,
@@ -51,11 +51,18 @@ export function ItemList({ onAddItem }: Props) {
     id: number;
     snapshot: Snapshot;
   } | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const filteredItems = useFilterItems(items, filters);
   const orderedItems = useWorkflowOrdering(filteredItems);
+  const supportsIntersectionObserver =
+    typeof IntersectionObserver !== "undefined";
+
   const visibleItems = orderedItems.filter(
-    (item, index) => index < visibleCount || item.id === pinnedId
+    (item, index) =>
+      !supportsIntersectionObserver ||
+      index < visibleCount ||
+      item.id === pinnedId
   );
   const activeIndex = Math.min(
     Math.max(focusedIndex, 0),
@@ -69,7 +76,24 @@ export function ItemList({ onAddItem }: Props) {
   const pendingFocusId = useRef<number | null>(null);
   const pendingFocusTarget = useRef<"task" | "complete">("task");
 
-  useKeyboardNavigation(listRef, visibleItems.length);
+  function handleLoadMoreFromKeyboard() {
+    const nextItem = orderedItems
+      .slice(visibleCount)
+      .find((item) => !visibleItems.some((visible) => visible.id === item.id));
+
+    if (!nextItem) return;
+
+    pendingFocusId.current = nextItem.id;
+    setVisibleCount((count) => count + 20);
+  }
+
+  useKeyboardNavigation(
+    listRef,
+    visibleItems.length,
+    visibleItems.length < orderedItems.length
+      ? handleLoadMoreFromKeyboard
+      : undefined
+  );
 
   useLayoutEffect(() => {
     const id = pendingFocusId.current;
@@ -149,6 +173,37 @@ export function ItemList({ onAddItem }: Props) {
     };
   }, []);
 
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+
+    if (
+      !sentinel ||
+      visibleCount >= orderedItems.length ||
+      typeof IntersectionObserver === "undefined"
+    ) {
+      return;
+    }
+
+    let active = true;
+    let loaded = false;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (!active || loaded || !entries.some((entry) => entry.isIntersecting)) {
+        return;
+      }
+
+      loaded = true;
+      setVisibleCount((count) => count + 20);
+    });
+
+    observer.observe(sentinel);
+
+    return () => {
+      active = false;
+      observer.disconnect();
+    };
+  }, [visibleCount, orderedItems.length]);
+
   if (items.length === 0) {
     return <EmptyState onAddItem={onAddItem} />;
   }
@@ -208,19 +263,6 @@ export function ItemList({ onAddItem }: Props) {
 
     pendingFocusId.current = id;
     setPinnedId(id);
-  }
-
-  function handleLoadMore() {
-    const nextItem = orderedItems
-      .slice(visibleCount, visibleCount + 20)
-      .find((item) => !visibleItems.some((visible) => visible.id === item.id));
-
-    const focusTarget = nextItem ?? orderedItems[visibleCount];
-    if (focusTarget) {
-      pendingFocusId.current = focusTarget.id;
-    }
-
-    setVisibleCount((count) => count + 20);
   }
 
   function handleCompleteClick(id: number) {
@@ -331,10 +373,15 @@ export function ItemList({ onAddItem }: Props) {
           );
         })}
       </ul>
-      {visibleCount < orderedItems.length && (
-        <Button type="button" onClick={handleLoadMore}>
-          Load more tasks
-        </Button>
+      <output className={styles.srOnly}>
+        Showing {visibleItems.length} of {orderedItems.length} tasks
+      </output>
+      {supportsIntersectionObserver && visibleCount < orderedItems.length && (
+        <div
+          ref={loadMoreRef}
+          className={styles.loadSentinel}
+          aria-hidden="true"
+        />
       )}
       {editingItem && (
         <AddItemModal

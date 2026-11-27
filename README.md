@@ -21,8 +21,7 @@ A accessible list manager built with React, TypeScript, and Zustand. Allows user
 - **Double-click a task** to complete or reopen it without changing its selection
 - **Complete tasks** using the circle button; completed tasks remain visible by default
 - **Delete selected items** via the Delete button
-- **Undo** any action (add, select, deselect, delete) with full history support
-- **Keyboard navigation** — Arrow keys, Home, End, Enter, Space, all supported
+- **Undo** up to 20 recent actions, including adding, selecting, editing, completing, and deleting tasks- **Keyboard navigation** — Arrow keys, Home, End, Enter, Space, all supported
 - **Accessible** — ARIA roles, Keyboard navigation with Tab and arrow keys, focus management, live regions
 - **Portal-based modal** — rendered at the document body level to avoid stacking context issues
 - **Organize tasks** by priority, category, and due date
@@ -30,7 +29,7 @@ A accessible list manager built with React, TypeScript, and Zustand. Allows user
 - **Persist tasks and filters** in browser local storage
 - **Edit items** — change their text, priority, category, or due date
 - **Task status** — pending, completed, or overdue based on the local date
-- **Load more tasks** in batches of 20
+- **Automatic loading** — tasks appear in batches of 20 while scrolling. If IntersectionObserver is unavailable, all tasks are shown.
 
 ## Tech Stack
 
@@ -124,7 +123,7 @@ GitHub Actions runs linting, tests and a production build on every push and pull
 
 ## State Management
 
-All application state lives in a single Zustand store:
+The list and its filters use a Zustand store. A separate, non-persisted store tracks storage errors:
 
 | State          | Type         | Description                       |
 | -------------- | ------------ | --------------------------------- |
@@ -132,18 +131,20 @@ All application state lives in a single Zustand store:
 | `focusedIndex` | `number`     | Which item has keyboard focus     |
 | `history`      | `Snapshot[]` | Stack of previous states for undo |
 
-Every action that mutates the list (`addItem`, `toggleItem`, `removeSelected`) saves a snapshot to `history` before applying the change, enabling unlimited undo.
+Every action that mutates the list (`addItem`, `toggleItem`, `removeSelected`) saves a snapshot to `history` before applying the change, List changes save snapshots for undo. The 20 most recent snapshots are kept, including after a reload. Older saved histories are trimmed to the most recent 20 entries.
+
+If saving fails, the app warns that changes are only in memory. A later successful save includes those changes. If loading fails, saving is disabled for that session to avoid overwriting existing data. Copy any new tasks before refreshing or closing the page..
 
 ## Keyboard Shortcuts
 
-| Key                       | Action                                    |
-| ------------------------- | ----------------------------------------- |
-| `Arrow Down` / `Arrow Up` | Move between task buttons                 |
-| `Home` / `End`            | Move to the first or last task button     |
-| `Enter` / `Space`         | Select or deselect with the task button   |
-| `Enter` / `Space`         | Complete or reopen with the circle button |
-| `Space`                   | Select or deselect the focused checkbox   |
-| `Tab`                     | Move between controls                     |
+| Key                       | Action                                                       |
+| ------------------------- | ------------------------------------------------------------ |
+| `Arrow Down` / `Arrow Up` | Move between task buttons; Arrow Down loads more when needed |
+| `Home` / `End`            | Move to the first or last task button                        |
+| `Enter` / `Space`         | Select or deselect with the task button                      |
+| `Enter` / `Space`         | Complete or reopen with the circle button                    |
+| `Space`                   | Select or deselect the focused checkbox                      |
+| `Tab`                     | Move between controls                                        |
 
 ## Accessibility
 
