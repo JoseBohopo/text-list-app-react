@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, devtools, persist } from "zustand/middleware";
 import type { PersistStorage } from "zustand/middleware";
 import { usePersistenceStatus } from "./usePersistenceStatus";
+import { isValidPersistedState } from "./validatePersistedState";
 import type { Item, ListStore } from "./types/useListStore.types";
 
 let nextId = 1;
@@ -17,7 +18,18 @@ let readFailed = false;
 
 const jsonStorage = createJSONStorage<ListStore>(
   () => ({
-    getItem: (name) => localStorage.getItem(name),
+    getItem: (name) => {
+      const saved = localStorage.getItem(name);
+      if (saved === null) return null;
+
+      const parsed: unknown = JSON.parse(saved);
+
+      if (!isValidPersistedState(parsed)) {
+        throw new Error("Invalid saved task data");
+      }
+
+      return saved;
+    },
     setItem: (name, value) => localStorage.setItem(name, value),
     removeItem: (name) => localStorage.removeItem(name),
   }),

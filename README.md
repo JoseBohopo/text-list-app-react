@@ -131,9 +131,11 @@ The list and its filters use a Zustand store. A separate, non-persisted store tr
 | `focusedIndex` | `number`     | Which item has keyboard focus     |
 | `history`      | `Snapshot[]` | Stack of previous states for undo |
 
-Every action that mutates the list (`addItem`, `toggleItem`, `removeSelected`) saves a snapshot to `history` before applying the change, List changes save snapshots for undo. The 20 most recent snapshots are kept, including after a reload. Older saved histories are trimmed to the most recent 20 entries.
+List changes save snapshots for undo. The 20 most recent snapshots are kept, including after a reload. Older saved histories are trimmed in memory and saved on the next successful write.
 
-If saving fails, the app warns that changes are only in memory. A later successful save includes those changes. If loading fails, saving is disabled for that session to avoid overwriting existing data. Copy any new tasks before refreshing or closing the page..
+Saved data is validated before loading. If it is invalid or uses an unsupported version, the app warns the user and disables saving for that session to avoid overwriting it.
+
+If saving fails, changes remain in memory and the app shows a warning. A later successful save includes those changes. Copy any unsaved tasks before refreshing or closing the page.
 
 ## Keyboard Shortcuts
 

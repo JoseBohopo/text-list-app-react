@@ -27,8 +27,19 @@ export function SearchFilter() {
       }
     }
 
+    function handleDocumentKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setIsFiltersOpen(false);
+      filterButtonRef.current?.focus();
+    }
+
     document.addEventListener("click", handleDocumentClick);
-    return () => document.removeEventListener("click", handleDocumentClick);
+    document.addEventListener("keydown", handleDocumentKeyDown);
+    return () => {
+      document.removeEventListener("click", handleDocumentClick);
+      document.removeEventListener("keydown", handleDocumentKeyDown);
+    };
   }, [isFiltersOpen]);
 
   return (
@@ -60,7 +71,10 @@ export function SearchFilter() {
             aria-label="Filters"
             aria-expanded={isFiltersOpen}
             aria-describedby="active-filter-count"
-            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+            onClick={(event) => {
+              event.currentTarget.focus();
+              setIsFiltersOpen((open) => !open);
+            }}
           >
             <svg
               viewBox="0 0 24 24"

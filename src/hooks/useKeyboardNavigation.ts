@@ -16,9 +16,7 @@ export function useKeyboardNavigation(
       const options = Array.from(
         list!.querySelectorAll<HTMLElement>("[data-task-control]")
       );
-      const index = options.findIndex(
-        (option) => option === document.activeElement
-      );
+      const index = options.indexOf(document.activeElement as HTMLElement);
       if (index < 0) return;
 
       if (
