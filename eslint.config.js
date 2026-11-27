@@ -32,4 +32,14 @@ export default defineConfig([
       },
     },
   },
+  {
+    files: ["e2e/**/*.ts"],
+    extends: [js.configs.recommended, tseslint.configs.recommendedTypeChecked],
+    languageOptions: {
+      parserOptions: {
+        project: ["./tsconfig.node.json"],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
 ]);

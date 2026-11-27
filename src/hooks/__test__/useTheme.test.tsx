@@ -4,12 +4,16 @@ import { useTheme } from "../useTheme";
 
 it("keeps the theme usable when storage is unavailable", () => {
   const previousTheme = document.documentElement.dataset.theme;
-  const getItem = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
-    throw new Error("Storage unavailable");
-  });
-  const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
-    throw new Error("Storage unavailable");
-  });
+  const getItem = vi
+    .spyOn(Storage.prototype, "getItem")
+    .mockImplementation(() => {
+      throw new Error("Storage unavailable");
+    });
+  const setItem = vi
+    .spyOn(Storage.prototype, "setItem")
+    .mockImplementation(() => {
+      throw new Error("Storage unavailable");
+    });
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
   try {
