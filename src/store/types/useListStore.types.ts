@@ -9,8 +9,8 @@ export interface Item {
   category: Category;
   dueDate?: string;
   completed: boolean;
-  createdAt: Date;
-  completedAt?: Date;
+  createdAt: string;
+  completedAt?: string;
   timeEstimate?: "5min" | "30min" | "1h" | "2h+";
 }
 
@@ -33,7 +33,6 @@ export interface ListStore {
   filters: FilterState;
 
   reset: () => void;
-  saveToHistory: () => void;
   addItem: (
     text: string,
     priority?: Priority,
@@ -41,15 +40,15 @@ export interface ListStore {
     dueDate?: string
   ) => void;
   toggleItem: (id: number) => void;
-  toggleItemState: (id: number) => void;
+  setItemsSelected: (ids: number[], selected: boolean) => void;
   removeSelected: () => void;
-  removeItem: (id: number) => void;
   setFocusIndex: (index: number) => void;
   updateItem: (
     id: number,
     updates: Partial<Pick<Item, "text" | "priority" | "category" | "dueDate">>
   ) => void;
   completedItem: (id: number) => void;
+  completeAfterSelectionClick: (id: number, firstSnapshot: Snapshot) => boolean;
   setFilters: (filters: Partial<FilterState>) => void;
   undo: () => boolean;
   getSelectedItem: () => Item | undefined;

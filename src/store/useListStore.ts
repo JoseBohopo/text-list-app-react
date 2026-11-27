@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import type { ListStore } from "./types/useListStore.types";
+import type { Item, ListStore } from "./types/useListStore.types";
 
 let nextId = 1;
 
@@ -14,6 +14,14 @@ const calcFocusIndex = (newItems: ListStore["items"], currentIndex: number) => {
   if (currentIndex >= newItems.length) return newItems.length - 1;
   return currentIndex;
 };
+
+function toggleCompletion(item: Item): Item {
+  return {
+    ...item,
+    completed: !item.completed,
+    completedAt: item.completed ? undefined : new Date().toISOString(),
+  };
+}
 
 export const useListStore = create<ListStore>()(
   devtools(
@@ -40,14 +48,6 @@ export const useListStore = create<ListStore>()(
             "reset"
           );
         },
-
-        saveToHistory: () =>
-          set(
-            (s) => ({ history: [...s.history, snapshot(s)] }),
-            false,
-            "saveToHistory"
-          ),
-
         addItem: (
           text,
           priority = "medium",
@@ -74,7 +74,7 @@ export const useListStore = create<ListStore>()(
                     category,
                     dueDate,
                     completed: false,
-                    createdAt: new Date(),
+                    createdAt: new Date().toISOString(),
                   },
                 ],
               };
@@ -94,41 +94,74 @@ export const useListStore = create<ListStore>()(
             false,
             "toggleItem"
           ),
-        toggleItemState: (id) =>
+        setItemsSelected: (ids, selected) => {
+          const idSet = new Set(ids);
+
           set(
-            (s) => ({
-              history: [...s.history, snapshot(s)],
-              items: s.items.map((item) =>
-                item.id === id
-                  ? {
-                      ...item,
-                      selected: !item.selected,
-                      completed: !item.completed,
-                      completedAt: item.completed ? undefined : new Date(),
-                    }
-                  : item
-              ),
-            }),
+            (s) => {
+              const hasChanges = s.items.some(
+                (item) => idSet.has(item.id) && item.selected !== selected
+              );
+
+              if (!hasChanges) return s;
+
+              return {
+                history: [...s.history, snapshot(s)],
+                items: s.items.map((item) =>
+                  idSet.has(item.id) ? { ...item, selected } : item
+                ),
+              };
+            },
             false,
-            "toggleItemState"
-          ),
+            "setItemsSelected"
+          );
+        },
         completedItem: (id) =>
           set(
             (s) => ({
               history: [...s.history, snapshot(s)],
               items: s.items.map((item) =>
-                item.id === id
-                  ? {
-                      ...item,
-                      completed: !item.completed,
-                      completedAt: item.completed ? undefined : new Date(),
-                    }
-                  : item
+                item.id === id ? toggleCompletion(item) : item
               ),
             }),
             false,
             "completedItem"
           ),
+        completeAfterSelectionClick: (id, firstSnapshot) => {
+          let applied = false;
+
+          set(
+            (s) => {
+              const previous = firstSnapshot.items.find(
+                (item) => item.id === id
+              );
+              const current = s.items.find((item) => item.id === id);
+
+              if (
+                s.history.at(-1) !== firstSnapshot ||
+                !previous ||
+                !current ||
+                current.selected === previous.selected
+              ) {
+                return s;
+              }
+
+              applied = true;
+
+              return {
+                items: s.items.map((item) =>
+                  item.id === id
+                    ? { ...toggleCompletion(item), selected: previous.selected }
+                    : item
+                ),
+              };
+            },
+            false,
+            "completeAfterSelectionClick"
+          );
+
+          return applied;
+        },
 
         updateItem: (id, updates) =>
           set(
@@ -163,20 +196,6 @@ export const useListStore = create<ListStore>()(
             },
             false,
             "removeSelected"
-          ),
-
-        removeItem: (id: number) =>
-          set(
-            (s) => {
-              const newItems = s.items.filter((item) => item.id !== id);
-              return {
-                history: [...s.history, snapshot(s)],
-                items: newItems,
-                focusedIndex: calcFocusIndex(newItems, s.focusedIndex),
-              };
-            },
-            false,
-            "removeItem"
           ),
 
         setFocusIndex: (index) =>

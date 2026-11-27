@@ -1,6 +1,6 @@
 import { useRef, useState, useLayoutEffect, useEffect } from "react";
 
-import type { Item } from "../../store/types/useListStore.types";
+import type { Item, Snapshot } from "../../store/types/useListStore.types";
 import { AddItemModal } from "../AddItemModal/AddItemModal";
 import { Button } from "../ui/Button/Button";
 
@@ -38,13 +38,19 @@ export function ItemList({ onAddItem }: Props) {
     setFocusIndex,
     toggleItem,
     completedItem,
-    removeItem,
+    completeAfterSelectionClick,
   } = useListStore();
 
   const [visibleCount, setVisibleCount] = useState(20);
   const [pinnedId, setPinnedId] = useState<number | null>(null);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [today, setToday] = useState(getToday);
+  const [interactionError, setInteractionError] = useState<string | null>(null);
+
+  const firstClickRef = useRef<{
+    id: number;
+    snapshot: Snapshot;
+  } | null>(null);
 
   const filteredItems = useFilterItems(items, filters);
   const orderedItems = useWorkflowOrdering(filteredItems);
@@ -61,11 +67,14 @@ export function ItemList({ onAddItem }: Props) {
   const restoreEditFocus = useRef(false);
   const listRef = useRef<HTMLUListElement>(null);
   const pendingFocusId = useRef<number | null>(null);
+  const pendingFocusTarget = useRef<"task" | "complete">("task");
 
   useKeyboardNavigation(listRef, visibleItems.length);
 
   useLayoutEffect(() => {
     const id = pendingFocusId.current;
+    const target = pendingFocusTarget.current;
+    pendingFocusTarget.current = "task";
     if (id === null) return;
     pendingFocusId.current = null;
 
@@ -84,7 +93,12 @@ export function ItemList({ onAddItem }: Props) {
       return;
     }
 
-    listRef.current?.querySelector<HTMLElement>(`[data-id="${id}"]`)?.focus();
+    const selector =
+      target === "complete"
+        ? `[data-complete-id="${id}"]`
+        : `[data-id="${id}"]`;
+
+    listRef.current?.querySelector<HTMLElement>(selector)?.focus();
     setFocusIndex(index);
   }, [visibleItems, setFocusIndex, activeIndex]);
 
@@ -147,8 +161,79 @@ export function ItemList({ onAddItem }: Props) {
     );
   }
 
+  function handleTaskClick(id: number, detail: number) {
+    setInteractionError(null);
+
+    if (detail > 0 && detail % 2 === 0) {
+      const firstClick = firstClickRef.current;
+
+      if (
+        firstClick?.id === id &&
+        useListStore.getState().history.at(-1) === firstClick.snapshot
+      ) {
+        return;
+      }
+
+      firstClickRef.current = null;
+      toggleItem(id);
+      return;
+    }
+
+    firstClickRef.current = null;
+    toggleItem(id);
+
+    if (detail > 0) {
+      const snapshot = useListStore.getState().history.at(-1);
+
+      if (snapshot) {
+        firstClickRef.current = { id, snapshot };
+      } else {
+        setInteractionError("Could not track the selection. Please try again.");
+      }
+    }
+  }
+
+  function handleTaskDoubleClick(id: number) {
+    const firstClick = firstClickRef.current;
+    firstClickRef.current = null;
+
+    if (
+      !firstClick ||
+      firstClick.id !== id ||
+      !completeAfterSelectionClick(id, firstClick.snapshot)
+    ) {
+      setInteractionError("Could not complete the task. Please try again.");
+      return;
+    }
+
+    pendingFocusId.current = id;
+    setPinnedId(id);
+  }
+
+  function handleLoadMore() {
+    const nextItem = orderedItems
+      .slice(visibleCount, visibleCount + 20)
+      .find((item) => !visibleItems.some((visible) => visible.id === item.id));
+
+    const focusTarget = nextItem ?? orderedItems[visibleCount];
+    if (focusTarget) {
+      pendingFocusId.current = focusTarget.id;
+    }
+
+    setVisibleCount((count) => count + 20);
+  }
+
+  function handleCompleteClick(id: number) {
+    setInteractionError(null);
+    pendingFocusId.current = id;
+    pendingFocusTarget.current = "complete";
+    setPinnedId(id);
+    completedItem(id);
+  }
+
   return (
     <>
+      {interactionError && <p role="alert">{interactionError}</p>}
       <ul
         id="list"
         ref={listRef}
@@ -180,8 +265,8 @@ export function ItemList({ onAddItem }: Props) {
                 className={styles.taskControl}
                 data-task-control
                 data-id={item.id}
-                aria-pressed={item.completed}
-                aria-label={`Complete ${item.text}`}
+                aria-pressed={item.selected}
+                aria-label={`Select ${item.text}`}
                 aria-describedby={`task-status-${item.id} task-category-${item.id}${item.dueDate ? ` task-date-${item.id}` : ""}`}
                 onFocus={() => {
                   setFocusIndex(index);
@@ -189,12 +274,8 @@ export function ItemList({ onAddItem }: Props) {
                     setPinnedId(null);
                   }
                 }}
-                onClick={() => {
-                  pendingFocusId.current = item.id;
-                  setPinnedId(item.id);
-                  completedItem(item.id);
-                }}
-                onDoubleClick={() => removeItem(item.id)}
+                onClick={(event) => handleTaskClick(item.id, event.detail)}
+                onDoubleClick={() => handleTaskDoubleClick(item.id)}
               >
                 <span className={styles.itemContent}>
                   <span className={styles.itemText}>{item.text}</span>
@@ -223,6 +304,16 @@ export function ItemList({ onAddItem }: Props) {
                     )}
                   </span>
                 </span>
+              </button>
+              <button
+                type="button"
+                className={styles.completeControl}
+                data-complete-id={item.id}
+                aria-label={`Complete ${item.text}`}
+                aria-pressed={item.completed}
+                onFocus={() => setFocusIndex(index)}
+                onClick={() => handleCompleteClick(item.id)}
+              >
                 <span className={styles.itemIndicator} aria-hidden="true" />
               </button>
               <Button
@@ -241,24 +332,7 @@ export function ItemList({ onAddItem }: Props) {
         })}
       </ul>
       {visibleCount < orderedItems.length && (
-        <Button
-          type="button"
-          onClick={() => {
-            const nextItem = orderedItems
-              .slice(visibleCount, visibleCount + 20)
-              .find(
-                (item) =>
-                  !visibleItems.some((visible) => visible.id === item.id)
-              );
-
-            const focusTarget = nextItem ?? orderedItems[visibleCount];
-            if (focusTarget) {
-              pendingFocusId.current = focusTarget.id;
-            }
-
-            setVisibleCount((count) => count + 20);
-          }}
-        >
+        <Button type="button" onClick={handleLoadMore}>
           Load more tasks
         </Button>
       )}

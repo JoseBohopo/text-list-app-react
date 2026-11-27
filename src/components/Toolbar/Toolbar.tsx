@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal";
 
 import { useListStore } from "../../store/useListStore";
@@ -12,10 +12,10 @@ export function Toolbar() {
   const {
     items,
     filters,
+    setItemsSelected,
     getSelectedItem,
     removeSelected,
     undo,
-    saveToHistory,
     history,
   } = useListStore();
 
@@ -23,6 +23,7 @@ export function Toolbar() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const deleteBtnRef = useRef<HTMLButtonElement>(null);
+  const selectAllRef = useRef<HTMLInputElement>(null);
 
   const restoreDeleteFocus = useRef(false);
 
@@ -38,6 +39,20 @@ export function Toolbar() {
   }, [isDeleteModalOpen]);
 
   const visibleItems = useFilterItems(items, filters);
+  const selectedVisibleCount = visibleItems.filter(
+    (item) => item.selected
+  ).length;
+
+  const allVisibleSelected =
+    visibleItems.length > 0 && selectedVisibleCount === visibleItems.length;
+
+  const partiallySelected = selectedVisibleCount > 0 && !allVisibleSelected;
+
+  useLayoutEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = partiallySelected;
+    }
+  }, [partiallySelected]);
   const hiddenSelectedCount =
     items.filter((item) => item.selected).length -
     visibleItems.filter((item) => item.selected).length;
@@ -50,7 +65,6 @@ export function Toolbar() {
       return;
     }
 
-    saveToHistory();
     removeSelected();
   }
 
@@ -60,7 +74,6 @@ export function Toolbar() {
   }
 
   function confirmDelete() {
-    saveToHistory();
     removeSelected();
     closeDeleteModal();
   }
@@ -69,6 +82,22 @@ export function Toolbar() {
     <>
       <article className={styles.actions} aria-label="List actions">
         <div className={styles.leftGroup}>
+          <label className={styles.selectAll}>
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              aria-label="Select all filtered tasks"
+              checked={allVisibleSelected}
+              disabled={visibleItems.length === 0}
+              onChange={(event) => {
+                setItemsSelected(
+                  visibleItems.map((item) => item.id),
+                  event.target.checked
+                );
+              }}
+            />
+            All
+          </label>
           <Button
             name="theme"
             variant="secondary"
@@ -190,7 +219,6 @@ export function Toolbar() {
               <path d="M3.5 13a9 9 0 1 0 2.6-6.4L3 10" />
             </svg>
           </Button>
-
           <Button
             name="delete"
             variant="secondary"
