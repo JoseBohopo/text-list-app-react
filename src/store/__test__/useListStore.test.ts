@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useListStore } from "../useListStore";
+import { usePersistenceStatus } from "../usePersistenceStatus";
 
 beforeEach(() => useListStore.getState().reset());
 
@@ -158,5 +159,84 @@ describe("undo", () => {
     useListStore.getState().addItem("b");
     useListStore.getState().undo();
     expect(useListStore.getState().items).toHaveLength(1);
+  });
+
+  it("keeps only the 20 most recent undo actions", () => {
+    for (let i = 1; i <= 25; i++) {
+      useListStore.getState().addItem(`Task ${i}`);
+    }
+
+    expect(useListStore.getState().history).toHaveLength(20);
+
+    for (let i = 0; i < 20; i++) {
+      expect(useListStore.getState().undo()).toBe(true);
+    }
+
+    expect(useListStore.getState().items.map((item) => item.text)).toEqual([
+      "Task 1",
+      "Task 2",
+      "Task 3",
+      "Task 4",
+      "Task 5",
+    ]);
+    expect(useListStore.getState().undo()).toBe(false);
+  });
+
+  it("keeps tasks and the newest history when rehydrating older data", async () => {
+    useListStore.getState().addItem("saved");
+    const { items, filters } = useListStore.getState();
+    const item = items[0];
+
+    const history = Array.from({ length: 25 }, (_, i) => ({
+      items: [{ ...item, text: `Snapshot ${i + 1}` }],
+      focusedIndex: 0,
+    }));
+
+    localStorage.setItem(
+      "listStore",
+      JSON.stringify({
+        state: { items, filters, focusedIndex: 0, history },
+        version: 0,
+      })
+    );
+
+    await useListStore.persist.rehydrate();
+
+    const restored = useListStore.getState();
+    expect(restored.items[0].text).toBe("saved");
+    expect(restored.history).toHaveLength(20);
+    expect(restored.history[0].items[0].text).toBe("Snapshot 6");
+    expect(restored.history[19].items[0].text).toBe("Snapshot 25");
+  });
+
+  it("keeps changes in memory when saving fails and saves them on recovery", () => {
+    const savedBefore = localStorage.getItem("listStore");
+    const setItem = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementationOnce(() => {
+        throw new DOMException("Storage full", "QuotaExceededError");
+      });
+
+    try {
+      useListStore.getState().addItem("First task");
+
+      expect(useListStore.getState().items[0].text).toBe("First task");
+      expect(usePersistenceStatus.getState().status).toBe("write-error");
+      expect(localStorage.getItem("listStore")).toBe(savedBefore);
+
+      useListStore.getState().addItem("Second task");
+
+      expect(usePersistenceStatus.getState().status).toBe("ok");
+      const savedAfter = localStorage.getItem("listStore");
+      if (savedAfter === null) throw new Error("Store was not saved");
+
+      expect(JSON.parse(savedAfter)).toMatchObject({
+        state: {
+          items: [{ text: "First task" }, { text: "Second task" }],
+        },
+      });
+    } finally {
+      setItem.mockRestore();
+    }
   });
 });

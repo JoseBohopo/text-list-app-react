@@ -1,5 +1,7 @@
 import { create } from "zustand";
-import { devtools, persist } from "zustand/middleware";
+import { createJSONStorage, devtools, persist } from "zustand/middleware";
+import type { PersistStorage } from "zustand/middleware";
+import { usePersistenceStatus } from "./usePersistenceStatus";
 import type { Item, ListStore } from "./types/useListStore.types";
 
 let nextId = 1;
@@ -8,6 +10,55 @@ const snapshot = (s: { items: ListStore["items"]; focusedIndex: number }) => ({
   items: s.items.map((item) => ({ ...item })),
   focusedIndex: s.focusedIndex,
 });
+
+const HISTORY_LIMIT = 20;
+
+let readFailed = false;
+
+const jsonStorage = createJSONStorage<ListStore>(
+  () => ({
+    getItem: (name) => localStorage.getItem(name),
+    setItem: (name, value) => localStorage.setItem(name, value),
+    removeItem: (name) => localStorage.removeItem(name),
+  }),
+  {
+    reviver: (key, value) =>
+      key === "history" && Array.isArray(value)
+        ? value.slice(-HISTORY_LIMIT)
+        : value,
+  }
+);
+
+if (!jsonStorage) {
+  throw new Error("Could not initialize task storage");
+}
+
+const storage: PersistStorage<ListStore> = {
+  getItem: (name) => {
+    try {
+      return jsonStorage.getItem(name);
+    } catch (error) {
+      readFailed = true;
+      usePersistenceStatus.getState().setStatus("read-error");
+      throw error;
+    }
+  },
+  setItem: (name, value) => {
+    if (readFailed) return;
+
+    try {
+      jsonStorage.setItem(name, value);
+      usePersistenceStatus.getState().setStatus("ok");
+    } catch {
+      usePersistenceStatus.getState().setStatus("write-error");
+    }
+  },
+  removeItem: (name) => jsonStorage.removeItem(name),
+};
+
+const pushHistory = (
+  s: Pick<ListStore, "items" | "focusedIndex" | "history">
+) => [...s.history.slice(-(HISTORY_LIMIT - 1)), snapshot(s)];
 
 const calcFocusIndex = (newItems: ListStore["items"], currentIndex: number) => {
   if (newItems.length === 0) return -1;
@@ -63,7 +114,7 @@ export const useListStore = create<ListStore>()(
               nextId = Math.max(nextId, highestId + 1);
 
               return {
-                history: [...s.history, snapshot(s)],
+                history: pushHistory(s),
                 items: [
                   ...s.items,
                   {
@@ -86,7 +137,7 @@ export const useListStore = create<ListStore>()(
         toggleItem: (id) =>
           set(
             (s) => ({
-              history: [...s.history, snapshot(s)],
+              history: pushHistory(s),
               items: s.items.map((item) =>
                 item.id === id ? { ...item, selected: !item.selected } : item
               ),
@@ -106,7 +157,7 @@ export const useListStore = create<ListStore>()(
               if (!hasChanges) return s;
 
               return {
-                history: [...s.history, snapshot(s)],
+                history: pushHistory(s),
                 items: s.items.map((item) =>
                   idSet.has(item.id) ? { ...item, selected } : item
                 ),
@@ -119,7 +170,7 @@ export const useListStore = create<ListStore>()(
         completedItem: (id) =>
           set(
             (s) => ({
-              history: [...s.history, snapshot(s)],
+              history: pushHistory(s),
               items: s.items.map((item) =>
                 item.id === id ? toggleCompletion(item) : item
               ),
@@ -166,7 +217,7 @@ export const useListStore = create<ListStore>()(
         updateItem: (id, updates) =>
           set(
             (s) => ({
-              history: [...s.history, snapshot(s)],
+              history: pushHistory(s),
               items: s.items.map((item) =>
                 item.id === id ? { ...item, ...updates } : item
               ),
@@ -189,7 +240,7 @@ export const useListStore = create<ListStore>()(
             (s) => {
               const newItems = s.items.filter((item) => !item.selected);
               return {
-                history: [...s.history, snapshot(s)],
+                history: pushHistory(s),
                 items: newItems,
                 focusedIndex: calcFocusIndex(newItems, s.focusedIndex),
               };
@@ -220,6 +271,7 @@ export const useListStore = create<ListStore>()(
       }),
       {
         name: "listStore",
+        storage,
       }
     ),
     { name: "ListStore" }

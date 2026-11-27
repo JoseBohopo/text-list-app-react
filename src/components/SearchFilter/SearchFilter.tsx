@@ -43,7 +43,7 @@ export function SearchFilter() {
           aria-label="Search tasks"
         />
         <div
-        ref={filterContainerRef}
+          ref={filterContainerRef}
           onKeyDown={(event) => {
             if (event.key !== "Escape" || !isFiltersOpen) return;
             event.preventDefault();

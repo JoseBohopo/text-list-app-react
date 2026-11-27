@@ -10,6 +10,11 @@ import { Toolbar } from "../../Toolbar/Toolbar";
 
 import styles from "../styles/ItemList.module.css";
 
+class PassiveIntersectionObserver {
+  observe = vi.fn();
+  disconnect = vi.fn();
+}
+
 beforeEach(() => {
   useListStore.getState().reset();
   useListStore.getState().addItem("first");
@@ -19,6 +24,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("ItemList", () => {
@@ -51,6 +57,99 @@ describe("ItemList", () => {
 
     expect(screen.getByText("First task")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add item" })).toHaveFocus();
+  });
+
+  it("loads batches on intersection without moving focus", () => {
+    let notify: (isIntersecting: boolean) => void = () => {
+      throw new Error("Observer was not created");
+    };
+
+    class MockIntersectionObserver {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        notify = (isIntersecting) => callback([{ isIntersecting }]);
+      }
+
+      observe = vi.fn();
+      disconnect = vi.fn();
+    }
+
+    vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
+    useListStore.getState().reset();
+
+    for (let i = 1; i <= 45; i++) {
+      useListStore.getState().addItem(`Task ${i}`);
+    }
+
+    render(<ItemList onAddItem={vi.fn()} />);
+    const first = screen.getByRole("button", { name: "Select Task 1" });
+    act(() => first.focus());
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(20);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Showing 20 of 45 tasks"
+    );
+
+    act(() => notify(false));
+    expect(screen.getAllByRole("listitem")).toHaveLength(20);
+
+    act(() => notify(true));
+    expect(screen.getAllByRole("listitem")).toHaveLength(40);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Showing 40 of 45 tasks"
+    );
+    expect(screen.getByText("Task 1")).toBeInTheDocument();
+    expect(screen.getByText("Task 25")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Load more tasks" })
+    ).not.toBeInTheDocument();
+    expect(first).toHaveFocus();
+    act(() => first.focus());
+
+    act(() => notify(true));
+    expect(screen.getAllByRole("listitem")).toHaveLength(45);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Showing 45 of 45 tasks"
+    );
+    expect(first).toHaveFocus();
+    expect(
+      screen.queryByRole("button", { name: "Load more tasks" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("loads the next batch when navigating past the last visible task", async () => {
+    vi.stubGlobal("IntersectionObserver", PassiveIntersectionObserver);
+    useListStore.getState().reset();
+
+    for (let i = 1; i <= 25; i++) {
+      useListStore.getState().addItem(`Task ${i}`);
+    }
+
+    const user = userEvent.setup();
+    render(<ItemList onAddItem={vi.fn()} />);
+
+    const lastVisible = screen.getByRole("button", { name: "Select Task 20" });
+    act(() => lastVisible.focus());
+
+    await user.keyboard("{ArrowDown}");
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(25);
+    expect(
+      screen.getByRole("button", { name: "Select Task 21" })
+    ).toHaveFocus();
+  });
+
+  it("shows all tasks when IntersectionObserver is unavailable", () => {
+    vi.stubGlobal("IntersectionObserver", undefined);
+    useListStore.getState().reset();
+
+    for (let i = 1; i <= 25; i++) {
+      useListStore.getState().addItem(`Task ${i}`);
+    }
+
+    render(<ItemList onAddItem={vi.fn()} />);
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(25);
+    expect(screen.getByText("Task 25")).toBeInTheDocument();
   });
 
   it("selects an item without completing it", async () => {
@@ -358,6 +457,45 @@ describe("ItemList", () => {
     }
   );
 
+  it("undoes double-click completion when history is full", async () => {
+    const user = userEvent.setup();
+    useListStore.getState().reset();
+    useListStore.getState().addItem("task");
+    const { id } = useListStore.getState().items[0];
+
+    for (let i = 0; i < 20; i++) {
+      useListStore.getState().toggleItem(id);
+    }
+
+    expect(useListStore.getState().history).toHaveLength(20);
+
+    render(
+      <>
+        <Toolbar />
+        <ItemList onAddItem={vi.fn()} />
+      </>
+    );
+
+    await user.dblClick(screen.getByRole("button", { name: "Select task" }));
+    expect(useListStore.getState().history).toHaveLength(20);
+    expect(useListStore.getState().items[0]).toMatchObject({
+      selected: false,
+      completed: true,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Undo last action" }));
+    expect(useListStore.getState().items[0]).toMatchObject({
+      selected: false,
+      completed: false,
+    });
+
+    await user.click(screen.getByRole("button", { name: "Undo last action" }));
+    expect(useListStore.getState().items[0]).toMatchObject({
+      selected: true,
+      completed: false,
+    });
+  });
+
   it("reports an intervening change without completing the task", async () => {
     const user = userEvent.setup();
     render(<ItemList onAddItem={vi.fn()} />);
@@ -450,7 +588,33 @@ describe("ItemList", () => {
     expect(screen.getByText("first")).toBeInTheDocument();
   });
 
-  it("loads more tasks without hiding existing ones", async () => {
+  it("filters tasks beyond the initially visible batch", async () => {
+    vi.stubGlobal("IntersectionObserver", PassiveIntersectionObserver);
+    useListStore.getState().reset();
+
+    for (let i = 1; i <= 25; i++) {
+      useListStore.getState().addItem(`Task ${i}`);
+    }
+
+    const user = userEvent.setup();
+    render(
+      <>
+        <SearchFilter />
+        <ItemList onAddItem={vi.fn()} />
+      </>
+    );
+
+    expect(screen.queryByText("Task 25")).not.toBeInTheDocument();
+
+    await user.type(
+      screen.getByRole("textbox", { name: "Search tasks" }),
+      "Task 25"
+    );
+    expect(screen.getByText("Task 25")).toBeInTheDocument();
+  });
+
+  it("keeps focus on a task reordered beyond the visible batch", async () => {
+    vi.stubGlobal("IntersectionObserver", PassiveIntersectionObserver);
     const user = userEvent.setup();
     useListStore.getState().reset();
 
@@ -461,40 +625,6 @@ describe("ItemList", () => {
     render(<ItemList onAddItem={vi.fn()} />);
 
     expect(screen.getAllByRole("listitem")).toHaveLength(20);
-    expect(screen.queryByText("Task 25")).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Load more tasks" }));
-
-    expect(screen.getAllByRole("listitem")).toHaveLength(25);
-    expect(screen.getByText("Task 1")).toBeInTheDocument();
-    expect(screen.getByText("Task 25")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Load more tasks" })
-    ).not.toBeInTheDocument();
-  });
-
-  it("filters tasks beyond the initially visible batch", () => {
-    useListStore.getState().reset();
-
-    for (let i = 1; i <= 25; i++) {
-      useListStore.getState().addItem(`Task ${i}`);
-    }
-
-    useListStore.getState().setFilters({ search: "Task 25" });
-    render(<ItemList onAddItem={vi.fn()} />);
-
-    expect(screen.getByText("Task 25")).toBeInTheDocument();
-  });
-
-  it("keeps focus on a task reordered beyond the visible batch", async () => {
-    const user = userEvent.setup();
-    useListStore.getState().reset();
-
-    for (let i = 1; i <= 25; i++) {
-      useListStore.getState().addItem(`Task ${i}`);
-    }
-
-    render(<ItemList onAddItem={vi.fn()} />);
 
     const task = screen.getByRole("button", { name: "Complete Task 1" });
     task.focus();
@@ -502,9 +632,24 @@ describe("ItemList", () => {
 
     expect(task).toHaveFocus();
     expect(task).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getAllByRole("listitem")).toHaveLength(21);
   });
 
-  it("keeps focus when the last task was already visible", async () => {
+  it("keeps focus when automatic loading includes a pinned task", async () => {
+    let notify: () => void = () => {
+      throw new Error("Observer was not created");
+    };
+
+    class MockIntersectionObserver {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        notify = () => callback([{ isIntersecting: true }]);
+      }
+
+      observe = vi.fn();
+      disconnect = vi.fn();
+    }
+
+    vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
     const user = userEvent.setup();
     useListStore.getState().reset();
 
@@ -516,12 +661,15 @@ describe("ItemList", () => {
 
     const task = screen.getByRole("button", { name: "Complete Task 1" });
     await user.click(task);
-    await user.click(screen.getByRole("button", { name: "Load more tasks" }));
 
-    expect(screen.getByRole("button", { name: "Select Task 1" })).toHaveFocus();
-    expect(
-      screen.queryByRole("button", { name: "Load more tasks" })
-    ).not.toBeInTheDocument();
+    expect(screen.getAllByRole("listitem")).toHaveLength(21);
+    expect(task).toHaveFocus();
+
+    act(() => notify());
+
+    expect(screen.getAllByRole("listitem")).toHaveLength(21);
+    expect(screen.getAllByText("Task 1")).toHaveLength(1);
+    expect(task).toHaveFocus();
   });
 
   it("combines category and priority filters", async () => {

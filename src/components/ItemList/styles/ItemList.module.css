@@ -173,6 +173,10 @@
   outline-offset: 2px;
 }
 
+.loadSentinel {
+  height: 1px;
+}
+
 [data-theme="dark"] .cat-work {
   background: #0c3d8c;
   color: #93c5fd;
