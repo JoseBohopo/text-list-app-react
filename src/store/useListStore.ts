@@ -261,6 +261,28 @@ export const useListStore = create<ListStore>()(
             "removeSelected"
           ),
 
+        removeItem: (id) =>
+          set(
+            (s) => {
+              const removedIndex = s.items.findIndex((item) => item.id === id);
+              if (removedIndex === -1) return s;
+
+              const newItems = s.items.filter((item) => item.id !== id);
+              const focusedIndex =
+                s.focusedIndex > removedIndex
+                  ? s.focusedIndex - 1
+                  : calcFocusIndex(newItems, s.focusedIndex);
+
+              return {
+                history: pushHistory(s),
+                items: newItems,
+                focusedIndex,
+              };
+            },
+            false,
+            "removeItem"
+          ),
+
         setFocusIndex: (index) =>
           set(
             (s) => {

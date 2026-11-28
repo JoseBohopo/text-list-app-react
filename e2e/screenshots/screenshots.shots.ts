@@ -126,6 +126,8 @@ test.describe("mobile", () => {
     colorScheme: "light",
     viewport: { width: 390, height: 844 },
     deviceScaleFactor: 2,
+    isMobile: true,
+    hasTouch: true,
   });
 
   test("task list", async ({ page }) => {
@@ -133,5 +135,43 @@ test.describe("mobile", () => {
     await page.goto("/");
     await expect(page.getByRole("listitem")).toHaveCount(tasks.length);
     await shoot(page, "mobile");
+  });
+
+  test("swipe action on mobile", async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(Element.prototype, "setPointerCapture", {
+        configurable: true,
+        value: () => {},
+      });
+    });
+
+    await seed(page);
+    await page.goto("/");
+
+    const task = page.getByRole("button", {
+      name: "Select Finish quarterly report",
+      exact: true,
+    });
+    const row = page.locator('[data-task-id="1"]');
+
+    const pointer = {
+      pointerId: 7,
+      pointerType: "touch",
+      isPrimary: true,
+      clientY: 100,
+      bubbles: true,
+    };
+
+    await task.dispatchEvent("pointerdown", {
+      ...pointer,
+      clientX: 200,
+    });
+    await row.dispatchEvent("pointermove", {
+      ...pointer,
+      clientX: 100,
+    });
+
+    await expect(row.locator('[data-action="delete"]')).toHaveText("Delete");
+    await shoot(page, "swipe-delete-mobile");
   });
 });
