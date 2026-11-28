@@ -9,10 +9,11 @@
 }
 
 .item {
-  display: flex;
+  display: block;
+  position: relative;
+  overflow: hidden;
   align-items: center;
   gap: 1rem;
-  padding: 1.25rem 1.5rem;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-left: 4px solid var(--accent);
@@ -20,6 +21,42 @@
   cursor: pointer;
   transition: all 0.2s ease;
   animation: slideUp 0.3s ease-out;
+}
+
+.swipeContent {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--bg-secondary);
+  transition: transform 0.2s ease;
+  touch-action: pan-y;
+}
+
+.swipeContent[data-swiping="true"] {
+  transition: none;
+}
+
+.swipeAction {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 1.5rem;
+  color: white;
+  font-weight: 600;
+}
+
+.swipeAction[data-action="complete"] {
+  justify-content: flex-start;
+  background: #15803d;
+}
+
+.swipeAction[data-action="delete"] {
+  justify-content: flex-end;
+  background: #dc2626;
 }
 
 /* Priority colors */
@@ -36,9 +73,12 @@
 }
 
 .item:hover:not(:disabled) {
-  background: var(--bg-tertiary);
   border-color: var(--accent);
   box-shadow: var(--shadow-sm);
+}
+
+.item:hover:not(:disabled) .swipeContent {
+  background: var(--bg-tertiary);
 }
 
 .taskControl:focus-visible {
@@ -74,11 +114,14 @@
 }
 
 .item.selected {
-  background: var(--accent-light);
   border-color: var(--accent);
 }
 
-.item.completed {
+.item.selected .swipeContent {
+  background: var(--accent-light);
+}
+
+.item.completed .swipeContent {
   opacity: 0.6;
 }
 
@@ -229,11 +272,17 @@
 }
 
 @media (max-width: 768px) {
-  .item {
+  .swipeContent {
     padding: 1rem 1.25rem;
   }
 
   .itemText {
     font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swipeContent {
+    transition: none;
   }
 }

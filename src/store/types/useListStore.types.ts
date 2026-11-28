@@ -52,4 +52,5 @@ export interface ListStore {
   setFilters: (filters: Partial<FilterState>) => void;
   undo: () => boolean;
   getSelectedItem: () => Item | undefined;
+  removeItem: (id: number) => void;
 }

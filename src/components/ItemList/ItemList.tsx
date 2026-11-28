@@ -8,6 +8,7 @@ import { useListStore } from "../../store/useListStore";
 import { useKeyboardNavigation } from "../../hooks/useKeyboardNavigation";
 import { useWorkflowOrdering } from "../../hooks/useworkflowOrdering";
 import { useFilterItems } from "../../hooks/useFilterItems";
+import { useSwipeActions } from "../../hooks/useSwipeActions";
 
 import { EmptyState } from "../EmptyState/EmptyState";
 
@@ -30,6 +31,11 @@ function getTaskStatus(item: Item, today: string) {
   return "Pending";
 }
 
+function announceStatus(message: string) {
+  const status = document.getElementById("status");
+  if (status) status.textContent = message;
+}
+
 export function ItemList({ onAddItem }: Props) {
   const {
     items,
@@ -39,6 +45,7 @@ export function ItemList({ onAddItem }: Props) {
     toggleItem,
     completedItem,
     completeAfterSelectionClick,
+    removeItem,
   } = useListStore();
 
   const [visibleCount, setVisibleCount] = useState(20);
@@ -75,6 +82,26 @@ export function ItemList({ onAddItem }: Props) {
   const listRef = useRef<HTMLUListElement>(null);
   const pendingFocusId = useRef<number | null>(null);
   const pendingFocusTarget = useRef<"task" | "complete">("task");
+
+  const swipe = useSwipeActions({
+    onComplete: (id) => {
+      const task = items.find((item) => item.id === id);
+      if (!task) return;
+
+      handleCompleteClick(id);
+      announceStatus(task.completed ? "Task reopened" : "Task completed");
+    },
+    onDelete: (id) => {
+      const task = items.find((item) => item.id === id);
+      if (!task) return;
+
+      setInteractionError(null);
+      removeItem(id);
+      announceStatus(
+        `Deleted ${task.text}. Use Undo last action to restore it.`
+      );
+    },
+  });
 
   function handleLoadMoreFromKeyboard() {
     const nextItem = orderedItems
@@ -294,81 +321,120 @@ export function ItemList({ onAddItem }: Props) {
           ${styles[`priority-${item.priority}`]}
           ${item.completed ? styles.completed : ""}
         `}
+              data-task-id={item.id}
+              onPointerDown={swipe.onPointerDown}
+              onPointerMove={swipe.onPointerMove}
+              onPointerUp={swipe.onPointerUp}
+              onPointerCancel={swipe.onPointerCancel}
+              onClickCapture={swipe.onClickCapture}
             >
-              <input
-                type="checkbox"
-                className={styles.selectControl}
-                aria-label={`Select ${item.text} for deletion`}
-                checked={item.selected}
-                onChange={() => toggleItem(item.id)}
-              />
-              <button
-                type="button"
-                className={styles.taskControl}
-                data-task-control
-                data-id={item.id}
-                aria-pressed={item.selected}
-                aria-label={`Select ${item.text}`}
-                aria-describedby={`task-status-${item.id} task-category-${item.id}${item.dueDate ? ` task-date-${item.id}` : ""}`}
-                onFocus={() => {
-                  setFocusIndex(index);
-                  if (pinnedId !== null && pinnedId !== item.id) {
-                    setPinnedId(null);
-                  }
-                }}
-                onClick={(event) => handleTaskClick(item.id, event.detail)}
-                onDoubleClick={() => handleTaskDoubleClick(item.id)}
+              <div
+                className={styles.swipeAction}
+                data-action={
+                  swipe.activeTaskId === item.id ? swipe.action : undefined
+                }
+                aria-hidden="true"
               >
-                <span className={styles.itemContent}>
-                  <span className={styles.itemText}>{item.text}</span>
-                  <span className={styles.itemMeta}>
-                    <span
-                      id={`task-status-${item.id}`}
-                      className={styles.taskStatus}
-                    >
-                      {status}
-                    </span>
-                    <span
-                      id={`task-category-${item.id}`}
-                      className={`${styles.badge} ${styles[`cat-${item.category}`]}`}
-                    >
-                      {item.category}
-                    </span>
-                    {item.dueDate && (
+                {swipe.activeTaskId === item.id && swipe.action
+                  ? swipe.action === "complete"
+                    ? "Complete"
+                    : "Delete"
+                  : null}
+              </div>
+
+              <div
+                className={styles.swipeContent}
+                data-swiping={
+                  swipe.activeTaskId === item.id && swipe.action !== null
+                }
+                style={{
+                  transform:
+                    swipe.activeTaskId === item.id
+                      ? `translateX(${swipe.offsetX}px)`
+                      : undefined,
+                }}
+              >
+                <input
+                  type="checkbox"
+                  className={styles.selectControl}
+                  aria-label={`Select ${item.text} for deletion`}
+                  checked={item.selected}
+                  onChange={() => toggleItem(item.id)}
+                />
+
+                <button
+                  type="button"
+                  className={styles.taskControl}
+                  data-task-control
+                  data-id={item.id}
+                  aria-pressed={item.selected}
+                  aria-label={`Select ${item.text}`}
+                  aria-describedby={`task-status-${item.id} task-category-${item.id}${item.dueDate ? ` task-date-${item.id}` : ""}`}
+                  onFocus={() => {
+                    setFocusIndex(index);
+                    if (pinnedId !== null && pinnedId !== item.id) {
+                      setPinnedId(null);
+                    }
+                  }}
+                  onClick={(event) => handleTaskClick(item.id, event.detail)}
+                  onDoubleClick={() => handleTaskDoubleClick(item.id)}
+                >
+                  <span className={styles.itemContent}>
+                    <span className={styles.itemText}>{item.text}</span>
+                    <span className={styles.itemMeta}>
                       <span
-                        id={`task-date-${item.id}`}
-                        className={styles.dueDate}
+                        id={`task-status-${item.id}`}
+                        className={styles.taskStatus}
                       >
-                        {new Date(item.dueDate).toLocaleDateString(undefined, {
-                          timeZone: "UTC",
-                        })}
+                        {status}
                       </span>
-                    )}
+                      <span
+                        id={`task-category-${item.id}`}
+                        className={`${styles.badge} ${styles[`cat-${item.category}`]}`}
+                      >
+                        {item.category}
+                      </span>
+                      {item.dueDate && (
+                        <span
+                          id={`task-date-${item.id}`}
+                          className={styles.dueDate}
+                        >
+                          {new Date(item.dueDate).toLocaleDateString(
+                            undefined,
+                            {
+                              timeZone: "UTC",
+                            }
+                          )}
+                        </span>
+                      )}
+                    </span>
                   </span>
-                </span>
-              </button>
-              <button
-                type="button"
-                className={styles.completeControl}
-                data-complete-id={item.id}
-                aria-label={`Complete ${item.text}`}
-                aria-pressed={item.completed}
-                onFocus={() => setFocusIndex(index)}
-                onClick={() => handleCompleteClick(item.id)}
-              >
-                <span className={styles.itemIndicator} aria-hidden="true" />
-              </button>
-              <Button
-                type="button"
-                variant="secondary"
-                aria-label={`Edit ${item.text}`}
-                onClick={(event) => {
-                  editTriggerRef.current = event.currentTarget;
-                  setEditingItem(item);
-                }}
-              >
-                Edit
-              </Button>
+                </button>
+
+                <button
+                  type="button"
+                  className={styles.completeControl}
+                  data-complete-id={item.id}
+                  aria-label={`Complete ${item.text}`}
+                  aria-pressed={item.completed}
+                  onFocus={() => setFocusIndex(index)}
+                  onClick={() => handleCompleteClick(item.id)}
+                >
+                  <span className={styles.itemIndicator} aria-hidden="true" />
+                </button>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  aria-label={`Edit ${item.text}`}
+                  onClick={(event) => {
+                    editTriggerRef.current = event.currentTarget;
+                    setEditingItem(item);
+                  }}
+                >
+                  Edit
+                </Button>
+              </div>
             </li>
           );
         })}

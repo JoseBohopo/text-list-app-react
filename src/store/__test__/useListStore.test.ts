@@ -102,6 +102,46 @@ describe("removeSelected", () => {
   });
 });
 
+describe("removeItem", () => {
+  it("removes only the specified item and restores it with undo", () => {
+    const store = useListStore.getState();
+    store.addItem("a");
+    store.addItem("b");
+    store.addItem("c");
+
+    const targetId = useListStore.getState().items[1].id;
+    useListStore.getState().setFocusIndex(2);
+
+    useListStore.getState().removeItem(targetId);
+
+    expect(useListStore.getState().items.map((item) => item.text)).toEqual([
+      "a",
+      "c",
+    ]);
+    expect(useListStore.getState().focusedIndex).toBe(1);
+
+    expect(useListStore.getState().undo()).toBe(true);
+    expect(useListStore.getState().items.map((item) => item.text)).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+    expect(useListStore.getState().focusedIndex).toBe(2);
+  });
+
+  it("does nothing when the item does not exist", () => {
+    useListStore.getState().addItem("a");
+
+    const before = useListStore.getState();
+    const historyLength = before.history.length;
+
+    useListStore.getState().removeItem(-1);
+
+    expect(useListStore.getState().items).toEqual(before.items);
+    expect(useListStore.getState().history).toHaveLength(historyLength);
+  });
+});
+
 describe("removeSelected — focusedIndex", () => {
   it("sets focusedIndex to -1 when list is empty after removal", () => {
     useListStore.getState().addItem("a");
