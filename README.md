@@ -4,15 +4,13 @@
 
 A accessible list manager built with React, TypeScript, and Zustand. Allows users to manage a list of text items with full keyboard navigation, undo history, and accessible UI patterns.
 
-![Task list with priorities, categories and filters](<./public/Screenshot 2026-11-26 140222.png>)
+![Task list in dark mode](./docs/screenshots/list-dark.png)
 
-### Empty state
+| Empty state                                                          | Filters                                                                | Add task                                                                |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| ![Empty task list in light mode](./docs/screenshots/empty-light.png) | ![Filter panel with a priority filter](./docs/screenshots/filters.png) | ![Add task dialog in dark mode](./docs/screenshots/add-dialog-dark.png) |
 
-![Empty task list in light mode](<./public/Screenshot 2026-11-26 135841.png>)
-
-### Add task
-
-![Add task dialog in dark mode](<./public/Screenshot 2026-11-26 135858.png>)
+<img src="./docs/screenshots/mobile.png" alt="Task list on a mobile screen" width="260">
 
 ## Features
 
@@ -106,10 +104,12 @@ Opens the app at `http://localhost:5173`.
 pnpm test           # watch mode
 pnpm run test:run   # single run (CI)
 pnpm run test:ui    # visual UI
+pnpm run screenshots
 ```
 
 #### End-to-end tests
 
+pnpm run screenshots
 Playwright tests run against the production build in Chromium, Firefox and WebKit, plus mobile and tablet viewports (Pixel 7, iPhone 13 and iPad). Each screen is checked in its initial state and after an action.
 
 ```bash
